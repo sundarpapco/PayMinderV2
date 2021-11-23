@@ -1,0 +1,26 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <string name="app_name">PayMinder</string>
+    <string name="client_id_debug" tools:ignore="TypographyDashes">
+        900158082905-3sgtaf4a4km1kvnqecbusjc27hf1r9q0.apps.googleusercontent.com</string>
+    <string name="client_id_release">
+        900158082905-09ggrth1oqk2oq5ep7qoersjq2g3s2c9.apps.googleusercontent.com</string>
+
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="bills_receivable">Bills Receivable</string>
+    <string name="loading_file" tools:ignore="TypographyEllipsis">Loading File...</string>
+    <string name="invalid_file_format">Invalid File Format</string>
+    <string name="unknown_error">Unknown Error Occurred</string>
+    <string name="check_your_internet_connection">Failed: Check your internet connection</string>
+    <string name="email">E-Mail</string>
+    <string name="sms">SMS</string>
+    <string name="xx_days">%1$d Days</string>
+    <string name="please_load_a_file">Please load a excel file!</string>
+    <string name="outstanding_invoice">Outstanding Invoices</string>
+    
+    <string name="channel_name_intimation">Intimation Sending</string>
+    <string name="email_intimation">Email Intimation</string>
+    <string name="sending_email">Sending Email</string>
+    <string name="email_sent_successfully">Emails sent successfully</string>
+
+</resources>
