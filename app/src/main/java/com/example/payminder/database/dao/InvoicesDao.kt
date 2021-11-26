@@ -14,7 +14,10 @@ interface InvoicesDao {
     suspend fun addInvoices(invoices:List<Invoice>)
 
     @Query("select * from invoices where customerId=:customerId order by overdueByDays desc")
-    fun getInvoicesForCustomer(customerId:Int):LiveData<List<Invoice>>
+    fun getInvoicesForCustomerLiveData(customerId:Int):LiveData<List<Invoice>>
+
+    @Query("select * from invoices where customerId=:customerId order by overdueByDays desc")
+    suspend fun getInvoicesForCustomer(customerId:Int):List<Invoice>
 
     @Query("delete from invoices")
     suspend fun clearTable()

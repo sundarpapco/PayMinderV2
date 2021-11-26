@@ -1,6 +1,7 @@
 package com.example.payminder.screens
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -34,10 +35,9 @@ fun GoogleSignInScreen(
 
     val context = LocalContext.current
     val signedIn = remember {
-        if (GoogleSignIn.getLastSignedInAccount(context) != null)
+        GoogleSignIn.getLastSignedInAccount(context)?.let{
             mutableStateOf(true)
-        else
-            mutableStateOf(false)
+        } ?: mutableStateOf(false)
     }
     val configuration = LocalConfiguration.current
     val signInLauncher = rememberLauncherForActivityResult(

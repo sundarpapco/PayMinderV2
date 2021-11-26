@@ -25,8 +25,8 @@ class OutStandingListVM(
     private val context = getApplication<Application>()
     private val repository=Repository(MasterDatabase.getInstance(context))
     var loadingStatus: LoadingStatus? by mutableStateOf(null)
-    val customers=repository.getAllCustomers()
-    val loadDetails=repository.getLoadDetail()
+    val customers=repository.getAllCustomersLiveData()
+    val loadDetails=repository.getLoadDetailLiveData()
 
     fun loadFileFromUri(uri: Uri) {
 

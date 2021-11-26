@@ -17,7 +17,7 @@ class InvoiceListVM(application: Application) : AndroidViewModel(application) {
 
     private val _customerId: MutableLiveData<Int> = MutableLiveData()
     val invoiceList: LiveData<List<Invoice>> = Transformations.switchMap(_customerId) {
-        repository.getInvoicesForCustomers(it)
+        repository.getInvoicesForCustomerLiveData(it)
     }
 
     fun loadInvoiceOfCustomer(customerId: Int) {

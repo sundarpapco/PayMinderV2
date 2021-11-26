@@ -26,12 +26,28 @@ class Repository(
             }
         }
 
-    fun getAllCustomers(): LiveData<List<Customer>> =
-        db.customersDao().getCustomers()
 
-    fun getInvoicesForCustomers(customerId: Int) =
+    fun getAllCustomersLiveData(): LiveData<List<Customer>> =
+        db.customersDao().getAllCustomersLiveData()
+
+    suspend fun getAllCustomers():List<Customer> =
+        db.customersDao().getAllCustomers()
+
+    suspend fun getCustomer(customerId: Int): Customer =
+        db.customersDao().getCustomer(customerId)
+
+    fun getInvoicesForCustomerLiveData(customerId: Int) =
+        db.invoicesDao().getInvoicesForCustomerLiveData(customerId)
+
+    suspend fun getInvoicesForCustomer(customerId: Int) =
         db.invoicesDao().getInvoicesForCustomer(customerId)
 
-    fun getLoadDetail():LiveData<LoadDetails> =
+    fun getLoadDetailLiveData():LiveData<LoadDetails> =
+        db.detailDao().getLoadDetailLiveData()
+
+    suspend fun getLoadDetail():LoadDetails =
         db.detailDao().getLoadDetail()
+
+    suspend fun updateCustomer(customer:Customer)=
+        db.customersDao().updateCustomer(customer)
 }

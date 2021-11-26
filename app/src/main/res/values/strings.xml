@@ -17,10 +17,16 @@
     <string name="xx_days">%1$d Days</string>
     <string name="please_load_a_file">Please load a excel file!</string>
     <string name="outstanding_invoice">Outstanding Invoices</string>
-    
+    <string name="total">Total</string>
+
     <string name="channel_name_intimation">Intimation Sending</string>
+    <string name="sending_email_intimation">Sending Email Intimations</string>
     <string name="email_intimation">Email Intimation</string>
-    <string name="sending_email">Sending Email</string>
+    <string name="sending_email_status">%1$d / %2$d</string>
     <string name="email_sent_successfully">Emails sent successfully</string>
+    <string name="cancel">Cancel</string>
+    <string name="email_subject">Account Statement - %1$s</string>
+    <string name="bills_receivable_for">Bills Receivable - %1$s, %2$s</string>
+
 
 </resources>

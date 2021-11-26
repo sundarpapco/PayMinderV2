@@ -53,7 +53,7 @@ class ExcelFileParser(private val filePath: String) {
         val workbook = Workbook.getWorkbook(file)
         val workSheet = workbook.getSheet(0)
 
-        require(isValidFile(workSheet)){"Invalid File format"}
+        require(isValidFile(workSheet)) { "Invalid File format" }
 
         //getCell(Column,Row)
 
@@ -85,13 +85,14 @@ class ExcelFileParser(private val filePath: String) {
         }
 
         workbook.close()
-        return ParsedRawData(loadDetails,parsedList)
+        return ParsedRawData(loadDetails, parsedList)
     }
 
-    private fun readLoadDetail(sheet:Sheet)=
+    private fun readLoadDetail(sheet: Sheet) =
         LoadDetails().apply {
-            period=sheet.getCell(0,4).contents
+            period = sheet.getCell(0, 4).contents.split("to").last().trim()
         }
+
 
     suspend fun readData(): ParsedData =
         withContext(Dispatchers.IO) {
@@ -154,19 +155,19 @@ class ExcelFileParser(private val filePath: String) {
                 result[customer] = invoices
                 customerId++
             }
-            ParsedData(parsedRawData.detail,result)
+            ParsedData(parsedRawData.detail, result)
         }
 
     data class ParsedData(
-        val detail:LoadDetails,
-        val data:Map<Customer,List<Invoice>>
+        val detail: LoadDetails,
+        val data: Map<Customer, List<Invoice>>
     )
 
 }
 
 private data class ParsedRawData(
     val detail: LoadDetails,
-    val parsedRows:List<ParsedRow>
+    val parsedRows: List<ParsedRow>
 )
 
 private data class ParsedRow(

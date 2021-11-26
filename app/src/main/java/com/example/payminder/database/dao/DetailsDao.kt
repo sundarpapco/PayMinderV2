@@ -14,7 +14,10 @@ interface DetailsDao {
     suspend fun saveLoadDetail(detail:LoadDetails)
 
     @Query("select * from details where id=1")
-    fun getLoadDetail():LiveData<LoadDetails>
+    fun getLoadDetailLiveData():LiveData<LoadDetails>
+
+    @Query("select * from details where id=1")
+    suspend fun getLoadDetail():LoadDetails
 
     @Query("delete from details")
     suspend fun clearLoadDetail()

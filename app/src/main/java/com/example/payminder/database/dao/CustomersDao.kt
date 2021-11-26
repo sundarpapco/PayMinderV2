@@ -1,10 +1,7 @@
 package com.example.payminder.database.dao
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.example.payminder.database.entities.Customer
 
 @Dao
@@ -14,10 +11,18 @@ interface CustomersDao {
     suspend fun addCustomer(customer:Customer)
 
     @Query("select * from customers order by name asc")
-    fun getCustomers():LiveData<List<Customer>>
+    fun getAllCustomersLiveData():LiveData<List<Customer>>
 
     @Query("delete from customers")
     suspend fun clearTable()
 
+    @Query("select * from customers where id=:customerId")
+    suspend fun getCustomer(customerId:Int):Customer
+
+    @Query("select * from customers order by name asc")
+    suspend fun getAllCustomers():List<Customer>
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun updateCustomer(customer: Customer)
 
 }

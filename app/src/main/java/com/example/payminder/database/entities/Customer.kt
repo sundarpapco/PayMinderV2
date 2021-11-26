@@ -40,4 +40,6 @@ data class Customer(
 
     fun hasEmailAddress():Boolean=
         email1.isNotBlank() || email2.isNotBlank() || email3.isNotBlank()
+
+    fun emailAddresses():List<String> = listOf(email1,email2,email3)
 }
