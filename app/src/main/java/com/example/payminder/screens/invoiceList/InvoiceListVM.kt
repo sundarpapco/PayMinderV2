@@ -1,13 +1,14 @@
 package com.example.payminder.screens.invoiceList
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
+import android.util.Log
+import androidx.lifecycle.*
 import com.example.payminder.database.MasterDatabase
 import com.example.payminder.database.Repository
 import com.example.payminder.database.entities.Invoice
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class InvoiceListVM(application: Application) : AndroidViewModel(application) {
 
@@ -29,5 +30,7 @@ class InvoiceListVM(application: Application) : AndroidViewModel(application) {
 
         _customerId.value = customerId
     }
+
+
 
 }

@@ -1,5 +1,6 @@
 package com.example.payminder.ui
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -11,6 +12,7 @@ import com.example.payminder.screens.invoiceList.InvoiceListScreen
 import com.example.payminder.screens.outstandingList.OutstandingScreen
 import java.net.URLDecoder
 
+@ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
 fun PayMinderUI() {

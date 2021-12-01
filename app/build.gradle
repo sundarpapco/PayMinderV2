@@ -86,6 +86,8 @@ dependencies {
     kapt "androidx.room:room-compiler:$room_version" // For Kotlin use kapt instead of annotationProcessor
     implementation "androidx.room:room-ktx:$room_version"
 
+    //Leak canary for leak detection
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
 
     //Java mail and JXL Libraries
     implementation fileTree(dir: 'libs' , include: '*.jar')

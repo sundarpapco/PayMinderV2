@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dialog Identifiers -->
+    <item name="confirmation_send_msg_customer" type="id"/>
+    <item name="confirmation_send_mail_customer" type="id"/>
+    <item name="confirmation_send_msg_all" type="id"/>
+    <item name="confirmation_send_mail_all" type="id"/>
+    <item name="confirmation_sign_out" type="id"/>
+
+
+    <!-- Menu Items -->
+    <item name="mnu_send_message" type="id"/>
+    <item name="mnu_send_mail" type="id"/>
+    <item name="fab_send_mail" type="id"/>
+    <item name="fab_send_message" type="id"/>
+
+
+</resources>

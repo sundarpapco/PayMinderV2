@@ -18,15 +18,41 @@
     <string name="please_load_a_file">Please load a excel file!</string>
     <string name="outstanding_invoice">Outstanding Invoices</string>
     <string name="total">Total</string>
+    <string name="cannot_load_while_intimating">Cannot load a file while intimations are being sent</string>
+    <string name="cannot_sign_out_while_intimating">Cannot sign out while intimations are being sent</string>
+    <string name="file_load_success">File Loaded successfully</string>
+    <string name="email_intimation_failed">Sending Email Failed</string>
+    <string name="check_internet_connection">Check Internet connection</string>
+    <string name="send_mail">Send Mail</string>
+    <string name="send_message">Send Message</string>
+    <string name="confirm_send_message_customer">Send SMS to this customer?
+        The message will be resent even if its already sent</string>
+    <string name="confirm_send_mail_customer">Send EMail to this customer?
+        The mail will be resent even if its already sent</string>
+    <string name="confirm_send_message_all">Send SMS to all customers for whom the SMS has not yet sent?</string>
+    <string name="confirm_send_mail_all">Send Email to all customers for whom the Email has not yet sent?</string>
+    <string name="confirm_sign_out">Are you sure want to sign out?</string>
+    <string name="send">Send</string>
+    <string name="sign_out">Sign Out</string>
 
     <string name="channel_name_intimation">Intimation Sending</string>
     <string name="sending_email_intimation">Sending Email Intimations</string>
     <string name="email_intimation">Email Intimation</string>
-    <string name="sending_email_status">%1$d / %2$d</string>
+    <string name="sending_status">%1$d / %2$d</string>
     <string name="email_sent_successfully">Emails sent successfully</string>
     <string name="cancel">Cancel</string>
     <string name="email_subject">Account Statement - %1$s</string>
     <string name="bills_receivable_for">Bills Receivable - %1$s, %2$s</string>
+    <string name="sending_sms_intimation">Sending SMS Intimations</string>
+    <string name="sms_intimation">SMS Intimation</string>
+    <string name="sms_sent_successfully">SMS sent successfully</string>
 
+    <string name="sms_failure_network_error">Network Error</string>
+    <string name="sms_failure_generic_failure">Generic failure</string>
+    <string name="sms_failure_no_service">No Service detected</string>
+    <string name="sms_failure_radio_off">Radio not available</string>
+    <string name="sms_failure_network_rejection">Network rejected the request</string>
+    <string name="sms_failure_unknown_error">Unknown Error</string>
+    <string name="sms_permission_not_available">Permission Denied. Please grant permission to send SMS</string>
 
 </resources>

@@ -98,13 +98,16 @@ class EmailGenerator(
 
         var totalAmount = 0.0
         val tableDetails = StringBuilder()
+        val htmlRupeeSymbol = "&#8377;"
+        var amountString:String=""
         invoices.forEach {
             totalAmount += it.amount
+            amountString=it.amount.rupeeFormatString(false)
             with(tableDetails) {
                 append("<tr>")
                 append("<td>${it.number}</td>")
                 append("<td>${it.date}</td>")
-                append("<td style=\"text-align: right;\">${it.amount.rupeeFormatString(false)}</td>")
+                append("<td nowrap=\"nowrap\" style=\"text-align: right;\">$htmlRupeeSymbol ${amountString}</td>")
                 append("<td>${it.overdueByDays}</td>")
                 append("</tr>")
             }
@@ -115,7 +118,7 @@ class EmailGenerator(
             append("<tr>")
             append("<th></th>")
             append("<th>${context.getString(R.string.total)}</th>")
-            append("<th style=\"text-align: right;\">${totalAmount.rupeeFormatString(false)}</th>")
+            append("<th nowrap=\"nowrap\" style=\"text-align: right;\">$htmlRupeeSymbol ${amountString}</th>")
             append("<th></th>")
 
         }

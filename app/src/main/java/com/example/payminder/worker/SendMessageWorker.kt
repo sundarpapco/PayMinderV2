@@ -3,12 +3,12 @@ package com.example.payminder.worker
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
+import android.content.IntentFilter
+import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
 import com.example.payminder.MainActivity
@@ -17,18 +17,14 @@ import com.example.payminder.R
 import com.example.payminder.database.MasterDatabase
 import com.example.payminder.database.Repository
 import com.example.payminder.database.entities.Customer
-import com.example.payminder.util.getMessage
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.client.util.ExponentialBackOff
-import com.google.api.services.gmail.Gmail
-import com.google.api.services.gmail.GmailScopes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 
-@Suppress("BlockingMethodInNonBlockingContext")
-class SendEmailWorker(context: Context, parameters: WorkerParameters) :
+@ExperimentalCoroutinesApi
+@FlowPreview
+class SendMessageWorker(context: Context, parameters: WorkerParameters) :
     CoroutineWorker(context, parameters) {
 
     companion object {
@@ -39,7 +35,7 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         private const val PENDING_INTENT_REQUEST_CODE = 1
 
         fun startWith(context: Context, customerId: Int = -1) {
-            val request = OneTimeWorkRequestBuilder<SendEmailWorker>()
+            val request = OneTimeWorkRequestBuilder<SendMessageWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setInputData(workDataOf(INPUT_DATA_CUSTOMER_ID to customerId))
                 .build()
@@ -53,16 +49,13 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
     }
 
     private val repository = Repository(MasterDatabase.getInstance(applicationContext))
-    private val loggedInAccount: GoogleSignInAccount =
-        GoogleSignIn.getLastSignedInAccount(applicationContext)
-            ?: error("Cannot send email without signing in")
 
     private val notificationBuilder =
         NotificationCompat.Builder(context, PayMinderApp.CHANNEL_ID_INTIMATION).apply {
-            setContentTitle(applicationContext.getString(R.string.sending_email_intimation))
+            setContentTitle(applicationContext.getString(R.string.sending_sms_intimation))
             setProgress(0, 100, true)
             setSmallIcon(R.drawable.ic_logo)
-            foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
+            foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
             priority = NotificationCompat.PRIORITY_DEFAULT
             setContentIntent(createNotificationContentIntent())
 
@@ -70,47 +63,70 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
             addAction(R.drawable.ic_close, context.getString(R.string.cancel), cancelIntent)
         }
 
+    private val smsManager = applicationContext.getSystemService(SmsManager::class.java)
+
+    private var currentProgress=0
+    private var maxProgress=0
+
+
     override suspend fun doWork(): Result {
 
         clearFailureNotificationIfAny()
-
-        if (!isInternetConnected()) {
-            postFailureNotification(applicationContext.getString(R.string.check_internet_connection))
-            return Result.success()
-        }
 
         setForeground(getForegroundInfo())
         notify(notificationBuilder.build())
 
         val customerList = getCustomerList()
-        val gmailService = createGmailService()
 
         if (customerList.isEmpty())
             return Result.success()
 
-        val maxProgress = customerList.size
-
-        for ((index, customer) in customerList.withIndex()) {
-            if (isStopped)
-                break
-            updateNotification(index + 1, maxProgress)
-            try {
-                sendMail(gmailService, customer)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                postFailureNotification(e.getMessage(applicationContext))
-                return Result.failure()
-            }
-            //sendFakeEmail(gmailService,customer)
-        }
-
-        return Result.success()
+        return sendTextMessages(customerList)
     }
+
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return ForegroundInfo(
             NOTIFICATION_ID_PROGRESS, notificationBuilder.build()
         )
+    }
+
+    private suspend fun sendTextMessages(customers: List<Customer>): Result {
+
+        maxProgress = customers.size
+        try {
+            messageSentResultFlow(applicationContext)
+                .zip(messageSendingFlow(customers)) { result, detail ->
+                    check(result.isSuccess) { result.failureReason!! }
+                    detail
+                }.collect {
+                    if (it.isThisLastMobileNumber())
+                        repository.updateCustomerMessageStatus(it.customer.id, true)
+                }
+        } catch (e: Exception) {
+            postFailureNotification(e.message!!)
+            return Result.failure()
+        }
+
+        return Result.success()
+    }
+
+    private fun sendTextMessage(details: MessagingDetail) {
+        val intent = MessagingIntent.createFrom(applicationContext, details)
+        val message = details.message(applicationContext)
+
+        if (message.length < 160) {
+            smsManager.sendTextMessage(details.mobileNumber, null, message, intent, null)
+        } else {
+            val parts = smsManager.divideMessage(message)
+            smsManager.sendMultipartTextMessage(
+                details.mobileNumber,
+                null,
+                parts,
+                arrayListOf(intent),
+                null
+            )
+        }
     }
 
 
@@ -176,83 +192,74 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         }
     }
 
-    private suspend fun sendMail(gmail: Gmail, customer: Customer) {
-
-        if (!customer.hasEmailAddress())
-            return
-
-        val invoices = repository.getInvoicesForCustomer(customer.id)
-        val loadDetails = repository.getLoadDetail()
-        val generator = EmailGenerator(
-            applicationContext,
-            customer,
-            invoices,
-            loadDetails,
-            loggedInAccount.displayName ?: ""
-        )
-        gmail.users().Messages().send(loggedInAccount.id, generator.generateGmailMessage())
-            .execute()
-
-        customer.emailSent = true
-        repository.updateCustomer(customer)
-    }
-
 
     /*This function will return the list of customers to send Emails
 
     Case 1:If the user has not provided any customerId as Input (in which case it will be -1),
-    then the whole list of customers will be retrieved. Then, the customers who has email addresses
-    but still the email was not sent is filtered and returned as a list.
+    then the whole list of customers will be retrieved. Then, the customers who has mobile numbers and
+    overdue amount but still the email was not sent is filtered and returned as a list.
 
     Case 2: If the user has provided a specific customer Id, then it means the user needs to send
-    Email to a customer even though the email has already been sent. So, in that case that user will
-    be fetched from the database. Then a check will be made to confirm he is having a valid email Id.
-    If so, the emailSent status is reset to false in the database (Necessary. Else the mail sending
-    loop will skip this customer) and then that customer will bereturned as a list.
+    Message to a customer even though the message has already been sent. So, in that case that user will
+    be fetched from the database. Then a check will be made to confirm he is having a valid mobile number
+    and also he is having overdue amount.If so, the smsSent status is reset to false in the
+    database (Necessary. Else the Message sending loop will skip this customer) and then that
+    customer will be returned as a list.
      */
     private suspend fun getCustomerList(): List<Customer> {
 
         val customerId = inputData.getInt(INPUT_DATA_CUSTOMER_ID, -1)
 
         return if (customerId == -1) {
-            repository.getAllCustomers().filter { it.hasEmailAddress() && !it.emailSent }
+            repository.getAllCustomers()
+                .filter { it.hasMobileNumber() && !it.smsSent && it.overdueAmount > 0.0 }
         } else {
             val customer = repository.getCustomer(customerId)
-            return if (!customer.hasEmailAddress()) {
+            return if (!customer.hasMobileNumber() || customer.overdueAmount == 0.0) {
                 emptyList()
             } else {
-                if (customer.emailSent)
-                    repository.updateCustomer(customer.apply { emailSent = false })
+                if (customer.smsSent)
+                    repository.updateCustomer(customer.apply { smsSent = false })
                 listOf(customer)
             }
         }
 
     }
 
-    private fun createGmailService(): Gmail {
+    private fun messageSendingFlow(customers: List<Customer>): Flow<MessagingDetail> =
+        customers.asFlow()
+            .flatMapConcat { messagingDetailsOfCustomer(it) }
+            .onEach {
+                if(it.isThisFirstMobileNumber()){
+                    currentProgress++
+                    updateNotification(currentProgress,maxProgress)
+                }
+                sendTextMessage(it)
+            }
 
-        //Create the credentials and Gmail service
-        val scopes = listOf(GmailScopes.GMAIL_SEND)
-        val jacksonFactory = JacksonFactory()
-        val httpTransport = NetHttpTransport()
 
-        val credentials =
-            GoogleAccountCredential.usingOAuth2(applicationContext, scopes)
-        credentials.backOff = ExponentialBackOff()
-        credentials.selectedAccountName = loggedInAccount.email
+    private fun messagingDetailsOfCustomer(customer: Customer): Flow<MessagingDetail> =
+        customer.mobileNumbers().asFlow()
+            .map { MessagingDetail(customer, it) }
 
-        val builder = Gmail.Builder(httpTransport, jacksonFactory, credentials)
-        builder.applicationName = applicationContext.getString(R.string.app_name)
-        return builder.build()
+
+    private fun messageSentResultFlow(context: Context) = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == MessagingIntent.SMS_SENT_ACTION)
+                    trySend(MessagingIntent.parseToResult(context, intent, resultCode))
+            }
+        }
+
+        context.registerReceiver(receiver, IntentFilter(MessagingIntent.SMS_SENT_ACTION))
+        awaitClose {
+            context.unregisterReceiver(receiver)
+        }
     }
 
 
-    private fun isInternetConnected(): Boolean =
-        (applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).run {
-            getNetworkCapabilities(activeNetwork)?.run {
-                hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                        || hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                        || hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-            } ?: false
-        }
 }
+
+
+
+

@@ -59,5 +59,12 @@
 
 ]]></string>
 
+    <string name="message_template">
+
+        Payment Reminder from PAPCO OFFSET PVT LTD: Your account "%1$s" is overdue by %2$s/- Please
+        clear the payment as early as possible. Ignore if already paid
+
+    </string>
+
 
 </resources>

@@ -41,5 +41,7 @@ data class Customer(
     fun hasEmailAddress():Boolean=
         email1.isNotBlank() || email2.isNotBlank() || email3.isNotBlank()
 
-    fun emailAddresses():List<String> = listOf(email1,email2,email3)
+    fun emailAddresses():List<String> = listOf(email1,email2,email3).filter { it.isNotBlank() }
+
+    fun mobileNumbers():List<String> = listOf(mobile1,mobile2).filter { it.isNotBlank() }
 }

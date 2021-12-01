@@ -1,8 +1,10 @@
 package com.example.payminder.screens.outstandingList
 
-import android.widget.Toast
+import android.Manifest
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -23,16 +25,22 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.rememberNavController
+import androidx.work.WorkInfo
 import com.example.payminder.R
 import com.example.payminder.createGoogleClient
 import com.example.payminder.database.entities.Customer
 import com.example.payminder.screens.Screens
-import com.example.payminder.ui.LoadingDialog
-import com.example.payminder.ui.LoadingScreen
-import com.example.payminder.ui.TitleText
+import com.example.payminder.ui.*
 import com.example.payminder.ui.theme.PayMinderTheme
 import com.example.payminder.util.LoadingStatus
+import com.example.payminder.util.isPermissionGranted
+import com.example.payminder.util.toast
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 
+@ExperimentalCoroutinesApi
+@FlowPreview
+@ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
 fun OutstandingScreen(
@@ -45,17 +53,40 @@ fun OutstandingScreen(
     val viewModel = remember { ViewModelProvider(graphEntry).get(OutStandingListVM::class.java) }
     val customers by viewModel.customers.observeAsState()
     val period by viewModel.loadDetails.observeAsState()
+    val intimationStatus by viewModel.intimationSendingStatus.observeAsState()
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         //Do something with the selected content Uri here
         it?.let { uri ->
             viewModel.loadFileFromUri(uri)
         }
     }
+    val permissionSeeker =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomEnd
     ) {
+
+        //Show any confirmation dialog if necessary
+        viewModel.confirmationDialogState?.let {
+            ConfirmationDialog(
+                state = it,
+                onDismissRequest = { viewModel.confirmationDialogState = null },
+                onPositiveButtonClicked = { state ->
+                    viewModel.confirmationDialogState = null
+                    onDialogConfirmation(
+                        context,
+                        state,
+                        navController,
+                        viewModel
+                    )
+                },
+                onNegativeButtonClicked = { viewModel.confirmationDialogState = null }
+            )
+        }
+
+
         //Top AppBar and Contents
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -69,7 +100,10 @@ fun OutstandingScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-                        filePicker.launch("application/vnd.ms-excel")
+                        if (intimationRunning(intimationStatus))
+                            toast(context, R.string.cannot_load_while_intimating)
+                        else
+                            filePicker.launch("application/vnd.ms-excel")
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_file_upload),
@@ -78,12 +112,10 @@ fun OutstandingScreen(
                     }
 
                     IconButton(onClick = {
-                        createGoogleClient(context).signOut().addOnSuccessListener {
-                            val options = NavOptions.Builder()
-                                .setPopUpTo(Screens.Outstanding.route, true)
-                                .build()
-                            navController.navigate(Screens.GooGleSignIn.route, options)
-                        }
+                        if (intimationRunning(intimationStatus))
+                            toast(context, R.string.cannot_sign_out_while_intimating)
+                        else
+                            viewModel.showSignOutConfirmation()
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_logout_24),
@@ -94,6 +126,12 @@ fun OutstandingScreen(
                 },
                 elevation = 0.dp
             )
+            if (intimationRunning(intimationStatus))
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colors.secondary
+                )
+
             //Box For Content
             Box(
                 modifier = Modifier
@@ -104,7 +142,12 @@ fun OutstandingScreen(
                     if (it.isEmpty()) {
                         FileNotLoadedScreen()
                     } else {
-                        CustomersList(it) { id, name ->
+                        CustomersList(
+                            customers = it,
+                            onSendMailToCustomer = viewModel::showSendMailToCustomerConfirmation,
+                            onSendMessageToCustomer = viewModel::showSendMessageToCustomerConfirmation
+
+                        ) { id, name ->
                             navController.navigate(
                                 Screens.InvoiceList.navigationString(id, name)
                             )
@@ -133,23 +176,44 @@ fun OutstandingScreen(
             },
             expandedFabItems = sendIntimationFabItems(),
             onExpandedItemClick = {
-                fabState=MultiFabState.COLLAPSED
-                if(it.identifier=="sendMail")
-                    viewModel.startSendingEmail()
-            }
+                fabState = MultiFabState.COLLAPSED
+                if (it.identifier == R.id.fab_send_mail)
+                    viewModel.showSendMailToAllConfirmation()
+
+
+                if (it.identifier == R.id.fab_send_message) {
+                    if (context.isPermissionGranted(Manifest.permission.SEND_SMS))
+                        viewModel.showSendMessageToAllConfirmation()
+                    else {
+                        toast(context,R.string.sms_permission_not_available)
+                    }
+                }
+
+            },
+            isVisible = !intimationRunning(intimationStatus)
         )
 
         DisplayLoadingStatus(
             loadingStatus = viewModel.loadingStatus,
             onLoadSuccess = {
-                Toast.makeText(context, "Load Success and Valid", Toast.LENGTH_SHORT).show()
+                toast(context, R.string.file_load_success)
                 viewModel.loadingStatus = null
             },
             onLoadFailed = { reason ->
-                Toast.makeText(context, reason, Toast.LENGTH_SHORT).show()
+                toast(context, reason)
                 viewModel.loadingStatus = null
             }
         )
+    }
+
+    DisposableEffect(true){
+
+        if(!context.isPermissionGranted(Manifest.permission.SEND_SMS))
+            permissionSeeker.launch(Manifest.permission.SEND_SMS)
+
+        onDispose {
+
+        }
     }
 }
 
@@ -188,7 +252,9 @@ private fun FileNotLoadedScreen() {
 @Composable
 private fun CustomersList(
     customers: List<Customer>,
-    onClick: (id: Int, name: String) -> Unit
+    onSendMailToCustomer: (Int) -> Unit,
+    onSendMessageToCustomer: (Int) -> Unit,
+    onClick: (id: Int, name: String) -> Unit,
 ) {
 
 
@@ -210,7 +276,9 @@ private fun CustomersList(
         ) { customer ->
             CustomerListItem(
                 customer = customer,
-                onClick = onClick
+                onClick = onClick,
+                onSendMail = onSendMailToCustomer,
+                onSendMessage = onSendMessageToCustomer
             )
         }
 
@@ -243,6 +311,62 @@ private fun DisplayLoadingStatus(
     }
 }
 
+
+private fun intimationRunning(workInfo: List<WorkInfo>?): Boolean {
+    return workInfo?.let {
+        it.isNotEmpty() && it.first().state == WorkInfo.State.RUNNING
+    } ?: false
+}
+
+
+@ExperimentalCoroutinesApi
+@FlowPreview
+private fun onDialogConfirmation(
+    context: Context,
+    state: ConfirmationDialogState<*>,
+    navController: NavController,
+    viewModel: OutStandingListVM
+) {
+
+    when (state.id) {
+
+        R.id.confirmation_sign_out -> {
+            createGoogleClient(context).signOut().addOnSuccessListener {
+                val options = NavOptions.Builder()
+                    .setPopUpTo(Screens.Outstanding.route, true)
+                    .build()
+                navController.navigate(Screens.GooGleSignIn.route, options)
+            }
+        }
+
+        R.id.confirmation_send_mail_all -> {
+            viewModel.startSendingEmail()
+        }
+
+        R.id.confirmation_send_mail_customer -> {
+            viewModel.sendEmailToCustomer(state.data as Int)
+        }
+
+        R.id.confirmation_send_msg_all -> {
+            viewModel.startSendingMessages()
+        }
+
+        R.id.confirmation_send_msg_customer -> {
+            viewModel.sendMessageToCustomer(state.data as Int)
+        }
+
+        else -> {
+            error("Invalid confirmation dialog ID")
+        }
+
+    }
+
+}
+
+
+@FlowPreview
+@ExperimentalCoroutinesApi
+@ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Preview
 @Composable

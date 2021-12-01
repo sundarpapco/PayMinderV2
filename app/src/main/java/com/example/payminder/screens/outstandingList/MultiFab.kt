@@ -20,7 +20,7 @@ enum class MultiFabState {
 }
 
 data class ExpandedFabItem(
-    val identifier: String,
+    val identifier: Int,
     val iconId: Int,
     val label: String
 )
@@ -32,70 +32,78 @@ fun MultiFloatingActionButton(
     onFabClick: (MultiFabState) -> Unit,
     expandedFabItems: List<ExpandedFabItem>,
     onExpandedItemClick: (ExpandedFabItem) -> Unit,
+    isVisible: Boolean = true,
     showLabels: Boolean = true
 ) {
 
-    val scale by animateFloatAsState(if (state == MultiFabState.EXPANDED) 1f else 0f)
+    val miniFabScale by animateFloatAsState(if (state == MultiFabState.EXPANDED) 1f else 0f)
+    val scale by animateFloatAsState(if (isVisible) 1f else 0f)
 
-    Column(
-        modifier = Modifier.padding(bottom = 16.dp, end = 16.dp),
-        horizontalAlignment = Alignment.End
-    ) {
+    if (scale > 0f)
 
-        if (state == MultiFabState.EXPANDED) {
-            expandedFabItems.forEach {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
+        Column(
+            modifier = Modifier.padding(bottom = 16.dp, end = 16.dp),
+            horizontalAlignment = Alignment.End
+        ) {
 
-                    if (showLabels) {
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier.alpha(scale)
+            if (state == MultiFabState.EXPANDED) {
+                expandedFabItems.forEach {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+
+                        if (showLabels) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier.alpha(miniFabScale)
+                            ) {
+                                Text(
+                                    text = it.label,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        FloatingActionButton(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .graphicsLayer {
+                                    scaleX = miniFabScale
+                                    scaleY = miniFabScale
+                                },
+                            onClick = { onExpandedItemClick(it) },
+                            backgroundColor = MaterialTheme.colors.secondary
                         ) {
-                            Text(
-                                text = it.label,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            Icon(
+                                painter = painterResource(id = it.iconId),
+                                contentDescription = "Fab Icon"
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(Modifier.width(4.dp))
                     }
-
-                    FloatingActionButton(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                            },
-                        onClick = { onExpandedItemClick(it) },
-                        backgroundColor = MaterialTheme.colors.secondary
-                    ) {
-                        Icon(
-                            painter = painterResource(id = it.iconId),
-                            contentDescription = "Fab Icon"
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            FloatingActionButton(
+                modifier = Modifier.graphicsLayer {
+                    scaleX=scale
+                    scaleY=scale
+                },
+                onClick = { onFabClick(state) },
+                backgroundColor = MaterialTheme.colors.secondary
+            ) {
+                Icon(
+                    painter = if (state == MultiFabState.COLLAPSED)
+                        painterResource(id = iconId)
+                    else
+                        painterResource(id = R.drawable.ic_close),
+                    contentDescription = "Fab Icon"
+                )
             }
         }
-
-        FloatingActionButton(
-            onClick = { onFabClick(state) },
-            backgroundColor = MaterialTheme.colors.secondary
-        ) {
-            Icon(
-                painter = if (state == MultiFabState.COLLAPSED)
-                    painterResource(id = iconId)
-                else
-                    painterResource(id = R.drawable.ic_close),
-                contentDescription = "Fab Icon"
-            )
-        }
-    }
 }
 
 fun sendIntimationFabItems(): List<ExpandedFabItem> {
@@ -103,14 +111,14 @@ fun sendIntimationFabItems(): List<ExpandedFabItem> {
     return LinkedList<ExpandedFabItem>().apply {
         add(
             ExpandedFabItem(
-                "sendMail",
+                R.id.fab_send_mail,
                 R.drawable.ic_email,
                 "Send Email"
             )
         )
         add(
             ExpandedFabItem(
-                "sendMessage",
+                R.id.fab_send_message,
                 R.drawable.ic_sms,
                 "Send Message"
             )
