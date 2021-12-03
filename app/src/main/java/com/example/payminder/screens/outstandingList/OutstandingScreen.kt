@@ -2,6 +2,7 @@ package com.example.payminder.screens.outstandingList
 
 import android.Manifest
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -11,10 +12,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -51,9 +57,10 @@ fun OutstandingScreen(
     var fabState by remember { mutableStateOf(MultiFabState.COLLAPSED) }
     val graphEntry = remember { navController.getBackStackEntry(Screens.Outstanding.route) }
     val viewModel = remember { ViewModelProvider(graphEntry).get(OutStandingListVM::class.java) }
-    val customers by viewModel.customers.observeAsState()
+    val customers by viewModel.filteredCustomers.collectAsState(initial = null)
     val period by viewModel.loadDetails.observeAsState()
     val intimationStatus by viewModel.intimationSendingStatus.observeAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         //Do something with the selected content Uri here
         it?.let { uri ->
@@ -91,43 +98,58 @@ fun OutstandingScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            TopAppBar(
-                title = {
-                    TitleText(
-                        title = stringResource(id = R.string.bills_receivable),
-                        subtitle = period?.let{
-                            stringResource(id = R.string.until_xx,it.period)
-                        } ?: ""
-                    )
-                },
-                actions = {
-                    IconButton(onClick = {
-                        if (intimationRunning(intimationStatus))
-                            toast(context, R.string.cannot_load_while_intimating)
-                        else
-                            filePicker.launch("application/vnd.ms-excel")
-                    }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_file_upload),
-                            contentDescription = "Load file"
+            if(searchQuery==null) {
+                TopAppBar(
+                    title = {
+                        TitleText(
+                            title = stringResource(id = R.string.bills_receivable),
+                            subtitle = period?.let {
+                                stringResource(id = R.string.until_xx, it.period)
+                            } ?: ""
                         )
-                    }
+                    },
+                    actions = {
 
-                    IconButton(onClick = {
-                        if (intimationRunning(intimationStatus))
-                            toast(context, R.string.cannot_sign_out_while_intimating)
-                        else
-                            viewModel.showSignOutConfirmation()
-                    }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_logout_24),
-                            contentDescription = "Log out"
+                        IconButton(onClick = {
+                            viewModel.setSearchQuery("")
+                        }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = "Search"
+                            )
+                        }
 
-                        )
-                    }
-                },
-                elevation = 0.dp
-            )
+                        IconButton(onClick = {
+                            if (intimationRunning(intimationStatus))
+                                toast(context, R.string.cannot_load_while_intimating)
+                            else
+                                filePicker.launch("application/vnd.ms-excel")
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_file_upload),
+                                contentDescription = "Load file"
+                            )
+                        }
+
+                        IconButton(onClick = {
+                            if (intimationRunning(intimationStatus))
+                                toast(context, R.string.cannot_sign_out_while_intimating)
+                            else
+                                viewModel.showSignOutConfirmation()
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_logout_24),
+                                contentDescription = "Log out"
+
+                            )
+                        }
+                    },
+                    elevation = 0.dp
+                )
+            }else{
+                SearchBar(query = searchQuery!!, onQueryChange = viewModel::setSearchQuery)
+            }
+
             if (intimationRunning(intimationStatus))
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
@@ -187,7 +209,7 @@ fun OutstandingScreen(
                     if (context.isPermissionGranted(Manifest.permission.SEND_SMS))
                         viewModel.showSendMessageToAllConfirmation()
                     else {
-                        toast(context,R.string.sms_permission_not_available)
+                        toast(context, R.string.sms_permission_not_available)
                     }
                 }
 
@@ -208,9 +230,9 @@ fun OutstandingScreen(
         )
     }
 
-    DisposableEffect(true){
+    DisposableEffect(true) {
 
-        if(!context.isPermissionGranted(Manifest.permission.SEND_SMS))
+        if (!context.isPermissionGranted(Manifest.permission.SEND_SMS))
             permissionSeeker.launch(Manifest.permission.SEND_SMS)
 
         onDispose {
@@ -363,6 +385,62 @@ private fun onDialogConfirmation(
 
     }
 
+}
+
+@Composable
+private fun SearchBar(
+    query: String,
+    onQueryChange: (String?) -> Unit
+) {
+
+    val searchBarFocus = remember{FocusRequester()}
+
+    TopAppBar(
+        elevation = 0.dp
+    ) {
+        TextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(searchBarFocus),
+            value = query,
+            onValueChange = {
+                onQueryChange(it)
+            },
+            placeholder = {
+                Text(
+                    stringResource(id = R.string.search),
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.4f)
+                )
+            },
+            trailingIcon = {
+                IconButton(onClick = { onQueryChange(null) }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_close),
+                        contentDescription = "Close search",
+                        tint = MaterialTheme.colors.onSurface
+                    )
+                }
+            },
+            singleLine = true,
+            maxLines = 1,
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                cursorColor = MaterialTheme.colors.secondary
+            )
+        )
+    }
+
+    BackHandler {
+        onQueryChange(null)
+    }
+
+    DisposableEffect(key1 = true){
+        searchBarFocus.requestFocus()
+        onDispose {  }
+    }
 }
 
 

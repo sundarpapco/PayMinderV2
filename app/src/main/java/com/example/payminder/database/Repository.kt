@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import com.example.payminder.database.entities.Customer
 import com.example.payminder.database.entities.LoadDetails
 import com.example.payminder.util.ExcelFileParser.ParsedData
+import kotlinx.coroutines.flow.Flow
 
 class Repository(
     private val db: MasterDatabase
@@ -29,6 +30,9 @@ class Repository(
 
     fun getAllCustomersLiveData(): LiveData<List<Customer>> =
         db.customersDao().getAllCustomersLiveData()
+
+    fun getAllCustomersFlow(): Flow<List<Customer>> =
+        db.customersDao().getAllCustomersFlow()
 
     suspend fun getAllCustomers():List<Customer> =
         db.customersDao().getAllCustomers()

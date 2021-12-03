@@ -3,6 +3,7 @@ package com.example.payminder.database.dao
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.payminder.database.entities.Customer
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CustomersDao {
@@ -30,5 +31,8 @@ interface CustomersDao {
 
     @Query("update customers set emailSent='false'")
     suspend fun resetEmailSendingStatus()
+
+    @Query("select * from customers order by name asc")
+    fun getAllCustomersFlow(): Flow<List<Customer>>
 
 }

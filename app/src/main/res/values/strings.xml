@@ -48,6 +48,7 @@
     <string name="sms_sent_successfully">SMS sent successfully</string>
     <string name="force_send_to_all">Force send to all</string>
     <string name="until_xx">Until %1$s</string>
+    <string name="search">Search...</string>
 
     <string name="sms_failure_network_error">Network Error</string>
     <string name="sms_failure_generic_failure">Generic failure</string>

@@ -15,10 +15,16 @@ import com.example.payminder.util.*
 import com.example.payminder.worker.IntimationWorker
 import com.example.payminder.worker.SendEmailWorker
 import com.example.payminder.worker.SendMessageWorker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
+import java.util.*
 
 @FlowPreview
 @ExperimentalCoroutinesApi
@@ -27,13 +33,31 @@ class OutStandingListVM(
 ) : AndroidViewModel(application) {
 
     private val context = getApplication<Application>()
-    private val repository=Repository(MasterDatabase.getInstance(context))
+    private val repository = Repository(MasterDatabase.getInstance(context))
 
     var loadingStatus: LoadingStatus? by mutableStateOf(null)
-    val customers=repository.getAllCustomersLiveData()
-    val loadDetails=repository.getLoadDetailLiveData()
+    val customers = repository.getAllCustomersLiveData()
+    val loadDetails = repository.getLoadDetailLiveData()
     val intimationSendingStatus = IntimationWorker.getWorkStatusLiveData(context)
-    var confirmationDialogState:ConfirmationDialogState<*>? by mutableStateOf(null)
+    var confirmationDialogState: ConfirmationDialogState<*>? by mutableStateOf(null)
+    val searchQuery = MutableStateFlow<String?>(null)
+
+    val filteredCustomers = repository.getAllCustomersFlow()
+        .combine(searchQuery.debounce(500)) { customers, query ->
+            //ToDO: Save the searchQuery in the saved state handle here
+            query?.let {
+                customers.filter { customer ->
+                    customer.name.lowercase(Locale.getDefault())
+                        .contains(it.lowercase(Locale.getDefault()))
+                }
+            } ?: customers
+        }.flowOn(Dispatchers.Default)
+
+
+    fun setSearchQuery(newQuery:String?){
+        searchQuery.value=newQuery
+    }
+
 
     fun loadFileFromUri(uri: Uri) {
 
@@ -61,9 +85,9 @@ class OutStandingListVM(
         }
     }
 
-    fun showSendMailToAllConfirmation(){
-        confirmationDialogState=ConfirmationDialogState<Unit>(
-            id=R.id.confirmation_send_mail_all,
+    fun showSendMailToAllConfirmation() {
+        confirmationDialogState = ConfirmationDialogState<Unit>(
+            id = R.id.confirmation_send_mail_all,
             title = context.getString(R.string.send_mail),
             msg = context.getString(R.string.confirm_send_mail_all),
             positiveButtonText = context.getString(R.string.send),
@@ -72,9 +96,9 @@ class OutStandingListVM(
         )
     }
 
-    fun showSendMessageToAllConfirmation(){
-        confirmationDialogState=ConfirmationDialogState<Unit>(
-            id=R.id.confirmation_send_msg_all,
+    fun showSendMessageToAllConfirmation() {
+        confirmationDialogState = ConfirmationDialogState<Unit>(
+            id = R.id.confirmation_send_msg_all,
             title = context.getString(R.string.send_message),
             msg = context.getString(R.string.confirm_send_message_all),
             positiveButtonText = context.getString(R.string.send),
@@ -83,10 +107,10 @@ class OutStandingListVM(
         )
     }
 
-    fun showSendMailToCustomerConfirmation(customerId: Int){
-        confirmationDialogState=ConfirmationDialogState(
-            id=R.id.confirmation_send_mail_customer,
-            data=customerId,
+    fun showSendMailToCustomerConfirmation(customerId: Int) {
+        confirmationDialogState = ConfirmationDialogState(
+            id = R.id.confirmation_send_mail_customer,
+            data = customerId,
             title = context.getString(R.string.send_mail),
             msg = context.getString(R.string.confirm_send_mail_customer),
             positiveButtonText = context.getString(R.string.send),
@@ -94,10 +118,10 @@ class OutStandingListVM(
         )
     }
 
-    fun showSendMessageToCustomerConfirmation(customerId: Int){
-        confirmationDialogState=ConfirmationDialogState(
-            id=R.id.confirmation_send_msg_customer,
-            data=customerId,
+    fun showSendMessageToCustomerConfirmation(customerId: Int) {
+        confirmationDialogState = ConfirmationDialogState(
+            id = R.id.confirmation_send_msg_customer,
+            data = customerId,
             title = context.getString(R.string.send_message),
             msg = context.getString(R.string.confirm_send_message_customer),
             positiveButtonText = context.getString(R.string.send),
@@ -105,29 +129,29 @@ class OutStandingListVM(
         )
     }
 
-    fun showSignOutConfirmation(){
-        confirmationDialogState=ConfirmationDialogState<Unit>(
-            id=R.id.confirmation_sign_out,
+    fun showSignOutConfirmation() {
+        confirmationDialogState = ConfirmationDialogState<Unit>(
+            id = R.id.confirmation_sign_out,
             msg = context.getString(R.string.confirm_sign_out),
             positiveButtonText = context.getString(R.string.sign_out),
             negativeButtonText = context.getString(R.string.cancel)
         )
     }
 
-    fun startSendingEmail(forceSend:Boolean){
+    fun startSendingEmail(forceSend: Boolean) {
         SendEmailWorker.startWith(context = context, forceSend = forceSend)
     }
 
-    fun sendEmailToCustomer(customerId: Int){
-        SendEmailWorker.startWith(context = context,customerId)
+    fun sendEmailToCustomer(customerId: Int) {
+        SendEmailWorker.startWith(context = context, customerId)
     }
 
-    fun startSendingMessages(forceSend: Boolean){
-        SendMessageWorker.startWith(context = context,forceSend=forceSend)
+    fun startSendingMessages(forceSend: Boolean) {
+        SendMessageWorker.startWith(context = context, forceSend = forceSend)
     }
 
-    fun sendMessageToCustomer(customerId:Int){
-        SendMessageWorker.startWith(context = context,customerId)
+    fun sendMessageToCustomer(customerId: Int) {
+        SendMessageWorker.startWith(context = context, customerId)
     }
 
 }
