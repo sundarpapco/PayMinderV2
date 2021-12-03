@@ -30,14 +30,18 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
     companion object {
 
         private const val INPUT_DATA_CUSTOMER_ID = "customer:id"
+        private const val INPUT_DATA_FORCE_SEND = "force:send:message"
         private const val NOTIFICATION_ID_PROGRESS = 1
         private const val NOTIFICATION_ID_FAILURE = 2
         private const val PENDING_INTENT_REQUEST_CODE = 1
 
-        fun startWith(context: Context, customerId: Int = -1) {
+        fun startWith(context: Context, customerId: Int = -1,forceSend:Boolean=false) {
             val request = OneTimeWorkRequestBuilder<SendMessageWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setInputData(workDataOf(INPUT_DATA_CUSTOMER_ID to customerId))
+                .setInputData(workDataOf(
+                    INPUT_DATA_CUSTOMER_ID to customerId,
+                    INPUT_DATA_FORCE_SEND to forceSend
+                ))
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
@@ -65,8 +69,8 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
 
     private val smsManager = applicationContext.getSystemService(SmsManager::class.java)
 
-    private var currentProgress=0
-    private var maxProgress=0
+    private var currentProgress = 0
+    private var maxProgress = 0
 
 
     override suspend fun doWork(): Result {
@@ -101,7 +105,7 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
                     detail
                 }.collect {
                     if (it.isThisLastMobileNumber())
-                        repository.updateCustomerMessageStatus(it.customer.id, true)
+                        repository.updateCustomer(it.customer.apply { smsSent = true })
                 }
         } catch (e: Exception) {
             postFailureNotification(e.message!!)
@@ -211,6 +215,8 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
         val customerId = inputData.getInt(INPUT_DATA_CUSTOMER_ID, -1)
 
         return if (customerId == -1) {
+            if (forceSend())
+                repository.resetMessageSendingDetail()
             repository.getAllCustomers()
                 .filter { it.hasMobileNumber() && !it.smsSent && it.overdueAmount > 0.0 }
         } else {
@@ -230,9 +236,9 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
         customers.asFlow()
             .flatMapConcat { messagingDetailsOfCustomer(it) }
             .onEach {
-                if(it.isThisFirstMobileNumber()){
+                if (it.isThisFirstMobileNumber()) {
                     currentProgress++
-                    updateNotification(currentProgress,maxProgress)
+                    updateNotification(currentProgress, maxProgress)
                 }
                 sendTextMessage(it)
             }
@@ -257,6 +263,8 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
         }
     }
 
+    private fun forceSend(): Boolean =
+        inputData.getBoolean(INPUT_DATA_FORCE_SEND, false)
 
 }
 

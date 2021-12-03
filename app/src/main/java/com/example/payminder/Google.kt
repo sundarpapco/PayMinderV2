@@ -9,12 +9,13 @@ import com.google.android.gms.common.api.Scope
 fun createGoogleClient(
     context: Context
 ): GoogleSignInClient {
-    val scopeSendMail = "https://www.googleapis.com/auth/gmail.send"
-    val builder = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-    builder.requestScopes(Scope(scopeSendMail))
-    builder.requestIdToken(context.getString(R.string.client_id_debug))
-    builder.requestEmail()
-    builder.requestProfile()
-    val gso = builder.build()
+    //val scopeSendMail = "https://www.googleapis.com/auth/gmail.send"
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).apply{
+        //requestScopes(Scope(scopeSendMail))
+        requestIdToken(context.getString(R.string.client_id_debug))
+        requestEmail()
+        requestProfile()
+    }.build()
+
     return GoogleSignIn.getClient(context, gso)
 }

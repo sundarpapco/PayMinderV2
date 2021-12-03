@@ -11,10 +11,7 @@ import com.example.payminder.R
 import com.example.payminder.database.MasterDatabase
 import com.example.payminder.database.Repository
 import com.example.payminder.ui.ConfirmationDialogState
-import com.example.payminder.util.ExcelFileParser
-import com.example.payminder.util.LoadingStatus
-import com.example.payminder.util.copyFileToCache
-import com.example.payminder.util.temporaryFile
+import com.example.payminder.util.*
 import com.example.payminder.worker.IntimationWorker
 import com.example.payminder.worker.SendEmailWorker
 import com.example.payminder.worker.SendMessageWorker
@@ -58,7 +55,7 @@ class OutStandingListVM(
             } catch (e: FileNotFoundException) {
                 LoadingStatus.Error(context.getString(R.string.check_your_internet_connection))
             } catch (e: Exception) {
-                LoadingStatus.Error(context.getString(R.string.invalid_file_format))
+                LoadingStatus.Error(e.getMessage(context))
             }
 
         }
@@ -70,7 +67,8 @@ class OutStandingListVM(
             title = context.getString(R.string.send_mail),
             msg = context.getString(R.string.confirm_send_mail_all),
             positiveButtonText = context.getString(R.string.send),
-            negativeButtonText = context.getString(R.string.cancel)
+            negativeButtonText = context.getString(R.string.cancel),
+            checkBoxText = context.getString(R.string.force_send_to_all)
         )
     }
 
@@ -80,7 +78,8 @@ class OutStandingListVM(
             title = context.getString(R.string.send_message),
             msg = context.getString(R.string.confirm_send_message_all),
             positiveButtonText = context.getString(R.string.send),
-            negativeButtonText = context.getString(R.string.cancel)
+            negativeButtonText = context.getString(R.string.cancel),
+            checkBoxText = context.getString(R.string.force_send_to_all)
         )
     }
 
@@ -115,20 +114,20 @@ class OutStandingListVM(
         )
     }
 
-    fun startSendingEmail(){
-        SendEmailWorker.startWith(context)
+    fun startSendingEmail(forceSend:Boolean){
+        SendEmailWorker.startWith(context = context, forceSend = forceSend)
     }
 
     fun sendEmailToCustomer(customerId: Int){
-        SendEmailWorker.startWith(context,customerId)
+        SendEmailWorker.startWith(context = context,customerId)
     }
 
-    fun startSendingMessages(){
-        SendMessageWorker.startWith(context)
+    fun startSendingMessages(forceSend: Boolean){
+        SendMessageWorker.startWith(context = context,forceSend=forceSend)
     }
 
     fun sendMessageToCustomer(customerId:Int){
-        SendMessageWorker.startWith(context,customerId)
+        SendMessageWorker.startWith(context = context,customerId)
     }
 
 }

@@ -95,7 +95,9 @@ fun OutstandingScreen(
                 title = {
                     TitleText(
                         title = stringResource(id = R.string.bills_receivable),
-                        subtitle = period?.period ?: ""
+                        subtitle = period?.let{
+                            stringResource(id = R.string.until_xx,it.period)
+                        } ?: ""
                     )
                 },
                 actions = {
@@ -340,7 +342,7 @@ private fun onDialogConfirmation(
         }
 
         R.id.confirmation_send_mail_all -> {
-            viewModel.startSendingEmail()
+            viewModel.startSendingEmail(state.isChecked)
         }
 
         R.id.confirmation_send_mail_customer -> {
@@ -348,7 +350,7 @@ private fun onDialogConfirmation(
         }
 
         R.id.confirmation_send_msg_all -> {
-            viewModel.startSendingMessages()
+            viewModel.startSendingMessages(state.isChecked)
         }
 
         R.id.confirmation_send_msg_customer -> {

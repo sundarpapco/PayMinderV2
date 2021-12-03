@@ -1,5 +1,6 @@
 package com.example.payminder.util
 
+import androidx.core.text.isDigitsOnly
 import com.example.payminder.database.entities.Customer
 import com.example.payminder.database.entities.Invoice
 import com.example.payminder.database.entities.LoadDetails
@@ -68,17 +69,33 @@ class ExcelFileParser(private val filePath: String) {
             val data = ParsedRow().apply {
                 invoiceDate = workSheet.getCell(COLUMN_INVOICE_DATE, currentRow).contents
                 invoiceNumber = workSheet.getCell(COLUMN_INVOICE_NUMBER, currentRow).contents
-                mobile1 = workSheet.getCell(COLUMN_MOBILE1, currentRow).contents
-                mobile2 = workSheet.getCell(COLUMN_MOBILE2, currentRow).contents
-                email1 = workSheet.getCell(COLUMN_EMAIL1, currentRow).contents
-                email2 = workSheet.getCell(COLUMN_EMAIL2, currentRow).contents
-                email3 = workSheet.getCell(COLUMN_EMAIL3, currentRow).contents
+
+                mobile1 = workSheet.getCell(COLUMN_MOBILE1, currentRow).contents.trim()
+                //removing space between numbers
+                mobile1 = mobile1.replace(" ","")
+                checkMobileNumber(mobile1, currentRow + 1)
+
+                mobile2 = workSheet.getCell(COLUMN_MOBILE2, currentRow).contents.trim()
+                //removing spaces between numbers
+                mobile2 = mobile2.replace(" ","")
+                checkMobileNumber(mobile2, currentRow + 1)
+
+                email1 = workSheet.getCell(COLUMN_EMAIL1, currentRow).contents.trim()
+                checkEmail(email1, currentRow + 1)
+
+                email2 = workSheet.getCell(COLUMN_EMAIL2, currentRow).contents.trim()
+                checkEmail(email2, currentRow + 1)
+
+                email3 = workSheet.getCell(COLUMN_EMAIL3, currentRow).contents.trim()
+                checkEmail(email3, currentRow + 1)
+
                 partyName = workSheet.getCell(COLUMN_PARTY_NAME, currentRow).contents
                 invoiceAmount = workSheet.getCell(COLUMN_INVOICE_AMOUNT, currentRow).contents
                 daysSinceInvoiced =
                     workSheet.getCell(COLUMN_DAYS_SINCE_INVOICE, currentRow).contents.toInt()
 
             }
+
             parsedList.add(data)
             currentRow++
 
@@ -143,6 +160,7 @@ class ExcelFileParser(private val filePath: String) {
                         number = it.invoiceNumber
                         date = it.invoiceDate
                         amount = invoiceAmount
+                        daysSinceInvoiced = it.daysSinceInvoiced
                         overdueByDays = if (it.daysSinceInvoiced > 30)
                             it.daysSinceInvoiced - 30
                         else
@@ -157,6 +175,19 @@ class ExcelFileParser(private val filePath: String) {
             }
             ParsedData(parsedRawData.detail, result)
         }
+
+    private fun checkMobileNumber(mobileNumber: String, row: Int) {
+        check(mobileNumber.isBlank() || (mobileNumber.isDigitsOnly() && mobileNumber.length == 10)) {
+            "Invalid mobile number in row $row"
+        }
+    }
+
+    private fun checkEmail(email: String, row: Int) {
+        check(email.isBlank() || (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())) {
+            "Invalid Email address in row $row"
+        }
+        android.util.Patterns.PHONE
+    }
 
     data class ParsedData(
         val detail: LoadDetails,

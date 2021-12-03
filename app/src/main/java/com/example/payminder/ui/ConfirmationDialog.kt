@@ -1,12 +1,9 @@
 package com.example.payminder.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -19,7 +16,12 @@ data class ConfirmationDialogState<T>(
     val positiveButtonText:String,
     val negativeButtonText:String?,
     val data:T?=null,
-)
+    val checkBoxText:String?=null
+){
+
+    var isChecked by mutableStateOf(false)
+
+}
 
 @Composable
 fun ConfirmationDialog(
@@ -47,10 +49,30 @@ fun ConfirmationDialog(
             }
         },
         text = {
-            Text(
-                text = state.msg,
-                style = MaterialTheme.typography.body1
-            )
+            Column{
+                Text(
+                    text = state.msg,
+                    style = MaterialTheme.typography.body2
+                )
+
+                state.checkBoxText?.let{
+                    Spacer(Modifier.height(20.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Checkbox(
+                            checked = state.isChecked,
+                            onCheckedChange = {state.isChecked = !state.isChecked}
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text=it,
+                            style = MaterialTheme.typography.body2
+                        )
+                    }
+                }
+            }
+
         }
 
     )
@@ -65,7 +87,8 @@ private fun ConfirmationDialogButtons(
     onNegativeButtonClicked:(ConfirmationDialogState<*>)->Unit={}
 ){
     Row(
-        modifier=Modifier.fillMaxWidth()
+        modifier= Modifier
+            .fillMaxWidth()
             .padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.End
     ){

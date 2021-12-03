@@ -99,7 +99,7 @@ class EmailGenerator(
         var totalAmount = 0.0
         val tableDetails = StringBuilder()
         val htmlRupeeSymbol = "&#8377;"
-        var amountString:String=""
+        var amountString=""
         invoices.forEach {
             totalAmount += it.amount
             amountString=it.amount.rupeeFormatString(false)
@@ -108,7 +108,7 @@ class EmailGenerator(
                 append("<td>${it.number}</td>")
                 append("<td>${it.date}</td>")
                 append("<td nowrap=\"nowrap\" style=\"text-align: right;\">$htmlRupeeSymbol ${amountString}</td>")
-                append("<td>${it.overdueByDays}</td>")
+                append("<td>${it.daysSinceInvoiced}</td>")
                 append("</tr>")
             }
         }

@@ -15,7 +15,8 @@ class Invoice(
     var number:String="",
     var date:String="",
     var amount:Double=0.00,
-    var overdueByDays:Int=0
+    var overdueByDays:Int=0,
+    var daysSinceInvoiced:Int=0
 ){
     @Ignore
     val amountRupees:String = amount.rupeeFormatString(true)

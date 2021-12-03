@@ -51,6 +51,11 @@ class Repository(
     suspend fun updateCustomer(customer:Customer)=
         db.customersDao().updateCustomer(customer)
 
-    suspend fun updateCustomerMessageStatus(customerId: Int,sentStatus:Boolean)=
-        db.customersDao().updateMessageStatusForCustomer(customerId,sentStatus)
+    suspend fun resetEmailSendingDetail(){
+        db.customersDao().resetEmailSendingStatus()
+    }
+
+    suspend fun resetMessageSendingDetail(){
+        db.customersDao().resetMessageSendingStatus()
+    }
 }

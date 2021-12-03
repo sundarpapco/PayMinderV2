@@ -25,7 +25,10 @@ interface CustomersDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateCustomer(customer: Customer)
 
-    @Query("update customers set smsSent=:sent where id=:customerId")
-    suspend fun updateMessageStatusForCustomer(customerId: Int,sent:Boolean)
+    @Query("update customers set smsSent='false'")
+    suspend fun resetMessageSendingStatus()
+
+    @Query("update customers set emailSent='false'")
+    suspend fun resetEmailSendingStatus()
 
 }

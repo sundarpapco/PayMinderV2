@@ -34,14 +34,18 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
     companion object {
 
         private const val INPUT_DATA_CUSTOMER_ID = "customer:id"
+        private const val INPUT_DATA_FORCE_SEND="force:send:email"
         private const val NOTIFICATION_ID_PROGRESS = 1
         private const val NOTIFICATION_ID_FAILURE = 2
         private const val PENDING_INTENT_REQUEST_CODE = 1
 
-        fun startWith(context: Context, customerId: Int = -1) {
+        fun startWith(context: Context, customerId: Int = -1,forceSend:Boolean=false) {
             val request = OneTimeWorkRequestBuilder<SendEmailWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setInputData(workDataOf(INPUT_DATA_CUSTOMER_ID to customerId))
+                .setInputData(workDataOf(
+                    INPUT_DATA_CUSTOMER_ID to customerId,
+                    INPUT_DATA_FORCE_SEND to forceSend
+                ))
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
@@ -215,6 +219,8 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         val customerId = inputData.getInt(INPUT_DATA_CUSTOMER_ID, -1)
 
         return if (customerId == -1) {
+            if(forceSend())
+                repository.resetEmailSendingDetail()
             repository.getAllCustomers().filter { it.hasEmailAddress() && !it.emailSent }
         } else {
             val customer = repository.getCustomer(customerId)
@@ -246,7 +252,6 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         return builder.build()
     }
 
-
     private fun isInternetConnected(): Boolean =
         (applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).run {
             getNetworkCapabilities(activeNetwork)?.run {
@@ -255,4 +260,7 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
                         || hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
             } ?: false
         }
+
+    private fun forceSend():Boolean =
+        inputData.getBoolean(INPUT_DATA_FORCE_SEND,false)
 }
