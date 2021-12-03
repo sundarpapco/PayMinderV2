@@ -105,20 +105,21 @@ class EmailGenerator(
             amountString=it.amount.rupeeFormatString(false)
             with(tableDetails) {
                 append("<tr>")
-                append("<td>${it.number}</td>")
-                append("<td>${it.date}</td>")
+                append("<td nowrap=\"nowrap\">${it.number}</td>")
+                append("<td nowrap=\"nowrap\">${it.date}</td>")
                 append("<td nowrap=\"nowrap\" style=\"text-align: right;\">$htmlRupeeSymbol ${amountString}</td>")
-                append("<td>${it.daysSinceInvoiced}</td>")
+                append("<td nowrap=\"nowrap\">${it.daysSinceInvoiced}</td>")
                 append("</tr>")
             }
         }
 
         //Add the Total row as last header row
+        val totalAmountString=totalAmount.rupeeFormatString(false)
         with(tableDetails) {
             append("<tr>")
             append("<th></th>")
-            append("<th>${context.getString(R.string.total)}</th>")
-            append("<th nowrap=\"nowrap\" style=\"text-align: right;\">$htmlRupeeSymbol ${amountString}</th>")
+            append("<th nowrap=\"nowrap\">${context.getString(R.string.total)}</th>")
+            append("<th nowrap=\"nowrap\" style=\"text-align: right;\">$htmlRupeeSymbol ${totalAmountString}</th>")
             append("<th></th>")
 
         }
