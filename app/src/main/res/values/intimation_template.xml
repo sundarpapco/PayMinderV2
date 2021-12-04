@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+     Arguments in order for this template
+     1. Customer name and city
+     2. period of the statement
+     3. table details (should be generated in code)
+     4. Sending company name -->
+
+    <string name="email_template"><![CDATA[
+
+    <html>
+
+<head>
+  <style>
+    table,th,td {
+      border: 1px solid red;
+    }
+
+    th,td{
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    th{
+      text-align: left;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Bills Receivable - %1$s</h2>
+
+  <p>Sir,<br><br>We are sending the account statement of M/s. %1$s until %2$s.<br>
+  Kindly arrange to settle the outstanding payment as early as possible</p>
+
+
+  <table>
+    <tr>
+      <th>Invoice Number</th>
+      <th>Invoice Date</th>
+      <th style="text-align: right;">Amount</th>
+      <th >Age In Days</th>
+    </tr>
+    %3$s
+  </table>
+  <br>
+  <p>In case of any clarifications, kindly contact us by replying to this email.</p>
+
+  <br><p>Best Regards<br>Director<br><b>%4$s</b></p>
+
+</body>
+
+</html>
+
+]]></string>
+
+    <string name="message_template">
+
+        Payment Reminder from %1$s: Your account "%2$s" is overdue by %3$s/- Please
+        clear the payment as early as possible. Ignore if already paid
+
+    </string>
+
+
+</resources>

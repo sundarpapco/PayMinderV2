@@ -39,7 +39,7 @@ import com.example.payminder.screens.Screens
 import com.example.payminder.ui.*
 import com.example.payminder.ui.theme.PayMinderTheme
 import com.example.payminder.util.LoadingStatus
-import com.example.payminder.util.isPermissionGranted
+import com.example.payminder.util.isPermissionsGranted
 import com.example.payminder.util.toast
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -68,7 +68,7 @@ fun OutstandingScreen(
         }
     }
     val permissionSeeker =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -98,7 +98,7 @@ fun OutstandingScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            if(searchQuery==null) {
+            if (searchQuery == null) {
                 TopAppBar(
                     title = {
                         TitleText(
@@ -146,7 +146,7 @@ fun OutstandingScreen(
                     },
                     elevation = 0.dp
                 )
-            }else{
+            } else {
                 SearchBar(query = searchQuery!!, onQueryChange = viewModel::setSearchQuery)
             }
 
@@ -164,7 +164,10 @@ fun OutstandingScreen(
             ) {
                 customers?.let {
                     if (it.isEmpty()) {
-                        FileNotLoadedScreen()
+                        period?.let {
+                            EmptyScreen(stringResource(id = R.string.no_customers_found))
+                        } ?: EmptyScreen(stringResource(id = R.string.please_load_a_file))
+
                     } else {
                         CustomersList(
                             customers = it,
@@ -201,17 +204,14 @@ fun OutstandingScreen(
             expandedFabItems = sendIntimationFabItems(),
             onExpandedItemClick = {
                 fabState = MultiFabState.COLLAPSED
-                if (it.identifier == R.id.fab_send_mail)
-                    viewModel.showSendMailToAllConfirmation()
+                if (context.isPermissionsGranted()) {
+                    if (it.identifier == R.id.fab_send_mail)
+                        viewModel.showSendMailToAllConfirmation()
 
-
-                if (it.identifier == R.id.fab_send_message) {
-                    if (context.isPermissionGranted(Manifest.permission.SEND_SMS))
+                    if (it.identifier == R.id.fab_send_message)
                         viewModel.showSendMessageToAllConfirmation()
-                    else {
-                        toast(context, R.string.sms_permission_not_available)
-                    }
-                }
+                } else
+                    toast(context, R.string.sms_permission_not_available)
 
             },
             isVisible = !intimationRunning(intimationStatus)
@@ -232,8 +232,14 @@ fun OutstandingScreen(
 
     DisposableEffect(true) {
 
-        if (!context.isPermissionGranted(Manifest.permission.SEND_SMS))
-            permissionSeeker.launch(Manifest.permission.SEND_SMS)
+        if (!context.isPermissionsGranted())
+            permissionSeeker.launch(
+                arrayOf(
+                    Manifest.permission.SEND_SMS,
+                    Manifest.permission.GET_ACCOUNTS,
+                    Manifest.permission.READ_PHONE_STATE
+                )
+            )
 
         onDispose {
 
@@ -258,7 +264,7 @@ private fun FabScrim(
 }
 
 @Composable
-private fun FileNotLoadedScreen() {
+private fun EmptyScreen(msg: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -266,7 +272,7 @@ private fun FileNotLoadedScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(id = R.string.please_load_a_file),
+            text = msg,
             color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
         )
     }
@@ -393,7 +399,7 @@ private fun SearchBar(
     onQueryChange: (String?) -> Unit
 ) {
 
-    val searchBarFocus = remember{FocusRequester()}
+    val searchBarFocus = remember { FocusRequester() }
 
     TopAppBar(
         elevation = 0.dp
@@ -437,9 +443,9 @@ private fun SearchBar(
         onQueryChange(null)
     }
 
-    DisposableEffect(key1 = true){
+    DisposableEffect(key1 = true) {
         searchBarFocus.requestFocus()
-        onDispose {  }
+        onDispose { }
     }
 }
 

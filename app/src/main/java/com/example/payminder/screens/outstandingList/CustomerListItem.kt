@@ -19,9 +19,10 @@ import com.example.payminder.R
 import com.example.payminder.database.entities.Customer
 import com.example.payminder.ui.OverFlowMenu
 import com.example.payminder.ui.OverflowMenuItem
+import com.example.payminder.ui.theme.NeutralOrange
 import com.example.payminder.ui.theme.PayMinderTheme
 import com.example.payminder.ui.theme.SuccessGreen
-import com.example.payminder.util.isPermissionGranted
+import com.example.payminder.util.isPermissionsGranted
 import com.example.payminder.util.toast
 
 @ExperimentalMaterialApi
@@ -48,15 +49,16 @@ fun CustomerListItem(
             OverFlowMenu(
                 items = overflowMenuItems(context),
                 onClick = {
-                    if (it.id == R.id.mnu_send_mail)
-                        onSendMail(customer.id)
 
-                    if (it.id == R.id.mnu_send_message) {
-                        if (context.isPermissionGranted(Manifest.permission.SEND_SMS))
+                    if (context.isPermissionsGranted()) {
+                        if (it.id == R.id.mnu_send_mail)
+                            onSendMail(customer.id)
+
+                        if (it.id == R.id.mnu_send_message)
                             onSendMessage(customer.id)
-                        else
-                            toast(context,R.string.sms_permission_not_available)
-                    }
+                    } else
+                        toast(context, R.string.sms_permission_not_available)
+
                 })
         }
 
@@ -80,7 +82,8 @@ fun CustomerListItem(
                     hasMail = customer.hasEmailAddress(),
                     hasMobile = customer.hasMobileNumber(),
                     mailSent = customer.emailSent,
-                    messageSent = customer.smsSent
+                    messageSent = customer.smsSent,
+                    isThereOverdue = customer.overdueAmount > 0.0
                 )
 
             }
@@ -163,6 +166,7 @@ private fun MailAndMessageDetails(
     hasMobile: Boolean,
     mailSent: Boolean,
     messageSent: Boolean,
+    isThereOverdue: Boolean,
     modifier: Modifier = Modifier
 ) {
 
@@ -205,18 +209,27 @@ private fun MailAndMessageDetails(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    modifier = Modifier.requiredWidth(15.dp),
-                    painter = if (messageSent)
-                        painterResource(id = R.drawable.ic_done)
-                    else
-                        painterResource(id = R.drawable.ic_close),
-                    contentDescription = "Overdue Icon",
-                    tint = if (messageSent)
-                        SuccessGreen
-                    else
-                        MaterialTheme.colors.error
-                )
+
+                if (isThereOverdue)
+                    Icon(
+                        modifier = Modifier.requiredWidth(15.dp),
+                        painter = if (messageSent)
+                            painterResource(id = R.drawable.ic_done)
+                        else
+                            painterResource(id = R.drawable.ic_close),
+                        contentDescription = "Overdue Icon",
+                        tint = if (messageSent)
+                            SuccessGreen
+                        else
+                            MaterialTheme.colors.error
+                    )
+                else
+                    Icon(
+                        modifier = Modifier.requiredWidth(15.dp),
+                        painter = painterResource(id = R.drawable.ic_done),
+                        contentDescription = "Overdue Icon",
+                        tint = NeutralOrange
+                    )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(id = R.string.sms),

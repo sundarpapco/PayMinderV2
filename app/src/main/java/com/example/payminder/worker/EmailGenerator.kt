@@ -37,7 +37,7 @@ class EmailGenerator(
 
         var companyName = ""
         val fromEmail = GoogleSignIn.getLastSignedInAccount(context)?.let {
-            companyName = it.displayName ?: ""
+            companyName = it.displayName ?: sendingCompanyName
             "${it.displayName} <${it.email}>"
         } ?: error("Cannot send Email without signing in to google")
 
@@ -96,12 +96,10 @@ class EmailGenerator(
 
     private fun generateHtmlTableDetails(): String {
 
-        var totalAmount = 0.0
         val tableDetails = StringBuilder()
         val htmlRupeeSymbol = "&#8377;"
         var amountString=""
         invoices.forEach {
-            totalAmount += it.amount
             amountString=it.amount.rupeeFormatString(false)
             with(tableDetails) {
                 append("<tr>")
@@ -114,7 +112,7 @@ class EmailGenerator(
         }
 
         //Add the Total row as last header row
-        val totalAmountString=totalAmount.rupeeFormatString(false)
+        val totalAmountString=customer.totalOutStanding.rupeeFormatString(false)
         with(tableDetails) {
             append("<tr>")
             append("<th></th>")

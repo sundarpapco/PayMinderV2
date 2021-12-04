@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.app.NotificationManagerCompat
@@ -34,18 +35,20 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
     companion object {
 
         private const val INPUT_DATA_CUSTOMER_ID = "customer:id"
-        private const val INPUT_DATA_FORCE_SEND="force:send:email"
+        private const val INPUT_DATA_FORCE_SEND = "force:send:email"
         private const val NOTIFICATION_ID_PROGRESS = 1
         private const val NOTIFICATION_ID_FAILURE = 2
         private const val PENDING_INTENT_REQUEST_CODE = 1
 
-        fun startWith(context: Context, customerId: Int = -1,forceSend:Boolean=false) {
+        fun startWith(context: Context, customerId: Int = -1, forceSend: Boolean = false) {
             val request = OneTimeWorkRequestBuilder<SendEmailWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setInputData(workDataOf(
-                    INPUT_DATA_CUSTOMER_ID to customerId,
-                    INPUT_DATA_FORCE_SEND to forceSend
-                ))
+                .setInputData(
+                    workDataOf(
+                        INPUT_DATA_CUSTOMER_ID to customerId,
+                        INPUT_DATA_FORCE_SEND to forceSend
+                    )
+                )
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
@@ -65,7 +68,10 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         NotificationCompat.Builder(context, PayMinderApp.CHANNEL_ID_INTIMATION).apply {
             setContentTitle(applicationContext.getString(R.string.sending_email_intimation))
             setProgress(0, 100, true)
-            setSmallIcon(R.drawable.ic_logo)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+                setSmallIcon(R.drawable.ic_logo_png)
+            else
+                setSmallIcon(R.drawable.ic_logo)
             foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
             priority = NotificationCompat.PRIORITY_DEFAULT
             setContentIntent(createNotificationContentIntent())
@@ -164,7 +170,10 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
                 .apply {
                     setContentTitle(applicationContext.getString(R.string.email_intimation_failed))
                     setContentText(reason)
-                    setSmallIcon(R.drawable.ic_logo)
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+                        setSmallIcon(R.drawable.ic_logo_png)
+                    else
+                        setSmallIcon(R.drawable.ic_logo)
                     priority = NotificationCompat.PRIORITY_DEFAULT
                     setContentIntent(createNotificationContentIntent())
                     setAutoCancel(true)
@@ -219,7 +228,7 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         val customerId = inputData.getInt(INPUT_DATA_CUSTOMER_ID, -1)
 
         return if (customerId == -1) {
-            if(forceSend())
+            if (forceSend())
                 repository.resetEmailSendingDetail()
             repository.getAllCustomers().filter { it.hasEmailAddress() && !it.emailSent }
         } else {
@@ -261,6 +270,6 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
             } ?: false
         }
 
-    private fun forceSend():Boolean =
-        inputData.getBoolean(INPUT_DATA_FORCE_SEND,false)
+    private fun forceSend(): Boolean =
+        inputData.getBoolean(INPUT_DATA_FORCE_SEND, false)
 }

@@ -48,7 +48,8 @@
     <string name="sms_sent_successfully">SMS sent successfully</string>
     <string name="force_send_to_all">Force send to all</string>
     <string name="until_xx">Until %1$s</string>
-    <string name="search">Search...</string>
+    <string name="search" tools:ignore="TypographyEllipsis">Search...</string>
+    <string name="no_customers_found">No customers found</string>
 
     <string name="sms_failure_network_error">Network Error</string>
     <string name="sms_failure_generic_failure">Generic failure</string>
@@ -56,6 +57,6 @@
     <string name="sms_failure_radio_off">Radio not available</string>
     <string name="sms_failure_network_rejection">Network rejected the request</string>
     <string name="sms_failure_unknown_error">Unknown Error</string>
-    <string name="sms_permission_not_available">Permission Denied. Please grant permission to send SMS</string>
+    <string name="sms_permission_not_available">Permission Denied. Please grant all permissions for this app in Settings</string>
 
 </resources>

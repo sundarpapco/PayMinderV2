@@ -43,7 +43,7 @@ class OutStandingListVM(
     val searchQuery = MutableStateFlow<String?>(null)
 
     val filteredCustomers = repository.getAllCustomersFlow()
-        .combine(searchQuery.debounce(500)) { customers, query ->
+        .combine(searchQuery.debounce(300)) { customers, query ->
             //ToDO: Save the searchQuery in the saved state handle here
             query?.let {
                 customers.filter { customer ->

@@ -1,5 +1,6 @@
 package com.example.payminder.util
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
@@ -49,8 +50,13 @@ fun Double.rupeeFormatString(includeSymbol: Boolean = true): String {
 
 }
 
-fun Context.isPermissionGranted(permission: String): Boolean {
-    return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+fun Context.isPermissionsGranted(): Boolean {
+    return ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) ==
+            PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.GET_ACCOUNTS) ==
+            PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) ==
+            PackageManager.PERMISSION_GRANTED
 }
 
 fun toast(context: Context, stringResource: Int, toastLength: Int = Toast.LENGTH_SHORT) {

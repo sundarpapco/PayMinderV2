@@ -18,7 +18,7 @@ sealed class Screens(val route: String) {
         fun navigationString(customerId: Int, customerName: String): String {
 
             val encodedName= if (customerName.contains("/")) {
-                URLEncoder.encode(customerName,StandardCharsets.UTF_8.toString())
+                URLEncoder.encode(customerName,"UTF-8")
             } else
                 customerName
 
