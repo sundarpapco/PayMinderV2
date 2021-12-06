@@ -1,6 +1,5 @@
 package com.example.payminder.screens.outstandingList
 
-import android.Manifest
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -8,8 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -35,6 +34,11 @@ fun CustomerListItem(
 ) {
 
     val context = LocalContext.current
+    val sentIcon = LocalSentIcon.current
+    val notSentIcon = LocalNotSentIcon.current
+    val totalAmountIcon = LocalTotalAmountIcon.current
+    val overdueAmountIcon = LocalOverdueIcon.current
+
     Card(
         onClick = { onClick(customer.id, customer.name) },
         modifier = Modifier
@@ -75,7 +79,9 @@ fun CustomerListItem(
             ) {
                 PendingAmount(
                     totalAmount = customer.totalOutStandingRupees,
-                    overdueAmount = customer.overdueRupees
+                    overdueAmount = customer.overdueRupees,
+                    totalAmountIcon = totalAmountIcon,
+                    overdueIcon = overdueAmountIcon
                 )
                 //Spacer(Modifier.weight(1f))
                 MailAndMessageDetails(
@@ -83,7 +89,9 @@ fun CustomerListItem(
                     hasMobile = customer.hasMobileNumber(),
                     mailSent = customer.emailSent,
                     messageSent = customer.smsSent,
-                    isThereOverdue = customer.overdueAmount > 0.0
+                    isThereOverdue = customer.overdueAmount > 0.0,
+                    sentIcon=sentIcon,
+                    notSentIcon = notSentIcon
                 )
 
             }
@@ -117,6 +125,8 @@ private fun NameAndCity(
 private fun PendingAmount(
     totalAmount: String,
     overdueAmount: String,
+    totalAmountIcon:Painter,
+    overdueIcon:Painter,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -128,7 +138,7 @@ private fun PendingAmount(
         ) {
             Icon(
                 modifier = Modifier.requiredWidth(15.dp),
-                painter = painterResource(id = R.drawable.ic_sigma),
+                painter = totalAmountIcon,
                 contentDescription = "Total outstanding Icon",
                 tint = MaterialTheme.colors.secondary
             )
@@ -146,7 +156,7 @@ private fun PendingAmount(
         ) {
             Icon(
                 modifier = Modifier.requiredWidth(15.dp),
-                painter = painterResource(id = R.drawable.ic_timer),
+                painter = overdueIcon,
                 contentDescription = "Overdue Icon",
                 tint = MaterialTheme.colors.secondary
             )
@@ -167,6 +177,8 @@ private fun MailAndMessageDetails(
     mailSent: Boolean,
     messageSent: Boolean,
     isThereOverdue: Boolean,
+    sentIcon:Painter,
+    notSentIcon: Painter,
     modifier: Modifier = Modifier
 ) {
 
@@ -185,9 +197,9 @@ private fun MailAndMessageDetails(
                 Icon(
                     modifier = Modifier.requiredWidth(15.dp),
                     painter = if (mailSent)
-                        painterResource(id = R.drawable.ic_done)
+                        sentIcon
                     else
-                        painterResource(id = R.drawable.ic_close),
+                        notSentIcon,
                     contentDescription = "Total outstanding Icon",
                     tint = if (mailSent)
                         SuccessGreen
@@ -214,9 +226,9 @@ private fun MailAndMessageDetails(
                     Icon(
                         modifier = Modifier.requiredWidth(15.dp),
                         painter = if (messageSent)
-                            painterResource(id = R.drawable.ic_done)
+                            sentIcon
                         else
-                            painterResource(id = R.drawable.ic_close),
+                            notSentIcon,
                         contentDescription = "Overdue Icon",
                         tint = if (messageSent)
                             SuccessGreen
@@ -226,7 +238,7 @@ private fun MailAndMessageDetails(
                 else
                     Icon(
                         modifier = Modifier.requiredWidth(15.dp),
-                        painter = painterResource(id = R.drawable.ic_done),
+                        painter = sentIcon,
                         contentDescription = "Overdue Icon",
                         tint = NeutralOrange
                     )

@@ -20,7 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -43,6 +45,24 @@ import com.example.payminder.util.isPermissionsGranted
 import com.example.payminder.util.toast
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+
+
+val LocalSentIcon = staticCompositionLocalOf<Painter> {
+    error("No Local value provided for Sent Icon")
+}
+
+val LocalNotSentIcon = staticCompositionLocalOf<Painter> {
+    error("No Local value provided for Not sent Icon")
+}
+
+val LocalTotalAmountIcon = staticCompositionLocalOf<Painter> {
+    error("No local value provided for total amount Icon")
+}
+
+val LocalOverdueIcon = staticCompositionLocalOf<Painter> {
+    error("No Local value provided for Overdue Icon")
+}
+
 
 @ExperimentalCoroutinesApi
 @FlowPreview
@@ -286,35 +306,44 @@ private fun CustomersList(
     onSendMessageToCustomer: (Int) -> Unit,
     onClick: (id: Int, name: String) -> Unit,
 ) {
-
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colors.background)
-            .padding(start = 12.dp, end = 12.dp, top = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    
+    //Providing all the drawable Icons necessary in order to boost the scrolling smoothness
+    CompositionLocalProvider(
+        LocalSentIcon provides painterResource(id = R.drawable.ic_done),
+        LocalNotSentIcon provides painterResource(id = R.drawable.ic_close),
+        LocalTotalAmountIcon provides painterResource(id = R.drawable.ic_sigma),
+        LocalOverdueIcon provides painterResource(id = R.drawable.ic_timer)
     ) {
 
-        item {
-            Spacer(Modifier.height(24.dp))
-        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colors.background)
+                .padding(start = 12.dp, end = 12.dp, top = 2.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
 
-        items(
-            items = customers,
-            key = { it.id }
-        ) { customer ->
-            CustomerListItem(
-                customer = customer,
-                onClick = onClick,
-                onSendMail = onSendMailToCustomer,
-                onSendMessage = onSendMessageToCustomer
-            )
-        }
+            item {
+                Spacer(Modifier.height(24.dp))
+            }
 
-        item {
-            Spacer(Modifier.height(100.dp))
+            items(
+                items = customers,
+                key = { it.id }
+            ) { customer ->
+                CustomerListItem(
+                    customer = customer,
+                    onClick = onClick,
+                    onSendMail = onSendMailToCustomer,
+                    onSendMessage = onSendMessageToCustomer
+                )
+            }
+
+            item {
+                Spacer(Modifier.height(100.dp))
+            }
         }
+        
     }
 }
 
@@ -409,9 +438,7 @@ private fun SearchBar(
                 .fillMaxWidth()
                 .focusRequester(searchBarFocus),
             value = query,
-            onValueChange = {
-                onQueryChange(it)
-            },
+            onValueChange = { onQueryChange(it)},
             placeholder = {
                 Text(
                     stringResource(id = R.string.search),

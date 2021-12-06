@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.payminder.R
 import com.example.payminder.database.MasterDatabase
 import com.example.payminder.database.Repository
+import com.example.payminder.database.entities.Customer
 import com.example.payminder.ui.ConfirmationDialogState
 import com.example.payminder.util.*
 import com.example.payminder.worker.IntimationWorker
@@ -18,10 +19,7 @@ import com.example.payminder.worker.SendMessageWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 import java.util.*
@@ -34,28 +32,39 @@ class OutStandingListVM(
 
     private val context = getApplication<Application>()
     private val repository = Repository(MasterDatabase.getInstance(context))
-
     var loadingStatus: LoadingStatus? by mutableStateOf(null)
-    val customers = repository.getAllCustomersLiveData()
     val loadDetails = repository.getLoadDetailLiveData()
     val intimationSendingStatus = IntimationWorker.getWorkStatusLiveData(context)
     var confirmationDialogState: ConfirmationDialogState<*>? by mutableStateOf(null)
-    val searchQuery = MutableStateFlow<String?>(null)
+    private val _searchQuery = MutableStateFlow<String?>(null)
+    val searchQuery:StateFlow<String?> = _searchQuery
+    val filteredCustomers = MutableStateFlow<List<Customer>?>(null)
 
-    val filteredCustomers = repository.getAllCustomersFlow()
-        .combine(searchQuery.debounce(300)) { customers, query ->
-            //ToDO: Save the searchQuery in the saved state handle here
-            query?.let {
-                customers.filter { customer ->
-                    customer.name.lowercase(Locale.getDefault())
-                        .contains(it.lowercase(Locale.getDefault()))
+    init {
+        loadCustomers()
+    }
+
+    fun setSearchQuery(newQuery: String?) {
+        _searchQuery.value = newQuery
+    }
+
+    private fun loadCustomers() {
+        viewModelScope.launch {
+            repository.getAllCustomersFlow()
+                .combine(searchQuery.debounce { if (it != null) 300 else 0 }) { customers, query ->
+                    //ToDO: Save the searchQuery in the saved state handle here
+                    query?.let {
+                        customers.filter { customer ->
+                            customer.name.lowercase(Locale.getDefault())
+                                .contains(it.lowercase(Locale.getDefault()))
+                        }
+                    } ?: customers
+                }.flowOn(Dispatchers.Default)
+                .collect {
+                    filteredCustomers.value = it
                 }
-            } ?: customers
-        }.flowOn(Dispatchers.Default)
+        }
 
-
-    fun setSearchQuery(newQuery:String?){
-        searchQuery.value=newQuery
     }
 
 

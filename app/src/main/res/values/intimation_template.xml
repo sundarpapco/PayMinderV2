@@ -43,7 +43,7 @@
     <tr>
       <th>Invoice Number</th>
       <th>Invoice Date</th>
-      <th style="text-align: right;">Amount</th>
+      <th style="text-align:right">Amount</th>
       <th >Age In Days</th>
     </tr>
     %3$s
