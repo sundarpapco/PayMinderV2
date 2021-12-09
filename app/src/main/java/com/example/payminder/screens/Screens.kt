@@ -1,7 +1,7 @@
 package com.example.payminder.screens
 
+import androidx.navigation.NavBackStackEntry
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 
 sealed class Screens(val route: String) {
@@ -17,8 +17,8 @@ sealed class Screens(val route: String) {
 
         fun navigationString(customerId: Int, customerName: String): String {
 
-            val encodedName= if (customerName.contains("/")) {
-                URLEncoder.encode(customerName,"UTF-8")
+            val encodedName = if (customerName.contains("/")) {
+                URLEncoder.encode(customerName, "UTF-8")
             } else
                 customerName
 
@@ -26,5 +26,21 @@ sealed class Screens(val route: String) {
         }
 
     }
+
+    object CustomerInfo : Screens("CustomerInfo/{customerId}") {
+
+        private const val ARG_CUSTOMER_ID = "customerId"
+
+        fun navigationString(customerId: Int): String {
+            return "CustomerInfo/${customerId}"
+        }
+
+        fun extractCustomerId(navEntry: NavBackStackEntry): Int {
+            return navEntry.arguments?.getString(ARG_CUSTOMER_ID)?.toInt()
+                ?: error("Customer Id argument not found")
+        }
+
+    }
+
 
 }

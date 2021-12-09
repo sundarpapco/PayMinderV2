@@ -6,7 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkInfo
 import com.example.payminder.R
 import com.example.payminder.database.MasterDatabase
 import com.example.payminder.database.Repository
@@ -34,13 +36,20 @@ class OutStandingListVM(
     private val repository = Repository(MasterDatabase.getInstance(context))
     var loadingStatus: LoadingStatus? by mutableStateOf(null)
     val loadDetails = repository.getLoadDetailLiveData()
-    val intimationSendingStatus = IntimationWorker.getWorkStatusLiveData(context)
     var confirmationDialogState: ConfirmationDialogState<*>? by mutableStateOf(null)
     private val _searchQuery = MutableStateFlow<String?>(null)
     val searchQuery:StateFlow<String?> = _searchQuery
     val filteredCustomers = MutableStateFlow<List<Customer>?>(null)
+    val isIntimationRunning = MediatorLiveData<Boolean>()
 
     init {
+
+        isIntimationRunning.addSource(IntimationWorker.getWorkStatusLiveData(context)){workInfo->
+            isIntimationRunning.value = workInfo?.let {
+                it.isNotEmpty() && it.first().state == WorkInfo.State.RUNNING
+            } ?: false
+        }
+
         loadCustomers()
     }
 

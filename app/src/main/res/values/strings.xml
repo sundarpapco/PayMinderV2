@@ -54,7 +54,6 @@
     <string name="sms_failure_network_error">Network Error</string>
     <string name="sms_failure_generic_failure">Generic failure</string>
     <string name="sms_failure_no_service">No Service detected</string>
-    <string name="sms_failure_radio_off">Radio not available</string>
     <string name="sms_failure_network_rejection">Network rejected the request</string>
     <string name="sms_failure_unknown_error">Unknown Error</string>
     <string name="sms_permission_not_available">Permission Denied. Please grant all permissions for this app in Settings</string>

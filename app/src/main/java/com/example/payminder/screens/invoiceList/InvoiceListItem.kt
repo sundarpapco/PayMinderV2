@@ -96,7 +96,7 @@ private fun AmountDetails(
             )
             Spacer(Modifier.width(4.dp))
             Text(
-                text = stringResource(id = R.string.xx_days, invoice.overdueByDays),
+                text = stringResource(id = R.string.xx_days, invoice.daysSinceInvoiced),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)

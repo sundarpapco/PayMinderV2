@@ -8,10 +8,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.payminder.screens.GoogleSignInScreen
 import com.example.payminder.screens.Screens
+import com.example.payminder.screens.customerInfoScreen.CustomerInfoScreen
 import com.example.payminder.screens.invoiceList.InvoiceListScreen
 import com.example.payminder.screens.outstandingList.OutstandingScreen
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import java.net.URLDecoder
 
+@FlowPreview
+@ExperimentalCoroutinesApi
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
@@ -42,6 +47,13 @@ fun PayMinderUI() {
                 customerName = URLDecoder.decode(customerName,"UTF-8"),
                 navController = navController
             )
+        }
+
+        composable(Screens.CustomerInfo.route){
+            CustomerInfoScreen(
+               customerId = Screens.CustomerInfo.extractCustomerId(it),
+               navController = navController
+           )
         }
 
     }

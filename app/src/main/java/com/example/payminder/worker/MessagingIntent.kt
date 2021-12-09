@@ -56,10 +56,10 @@ object MessagingIntent {
                 context.getString(R.string.sms_failure_no_service)
 
             SmsManager.RESULT_ERROR_RADIO_OFF ->
-                context.getString(R.string.sms_failure_radio_off)
+                context.getString(R.string.sms_failure_no_service)
 
             SmsManager.RESULT_RADIO_NOT_AVAILABLE ->
-                context.getString(R.string.sms_failure_radio_off)
+                context.getString(R.string.sms_failure_no_service)
 
             SmsManager.RESULT_NETWORK_REJECT ->
                 context.getString(R.string.sms_failure_network_rejection)

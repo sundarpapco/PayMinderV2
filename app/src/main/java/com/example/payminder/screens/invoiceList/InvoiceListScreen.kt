@@ -6,13 +6,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
@@ -51,6 +51,18 @@ fun InvoiceListScreen(
                         title = customerName,
                         subtitle = stringResource(id = R.string.outstanding_invoice)
                     )
+                },
+                actions = {
+                          IconButton(onClick = {
+                              navController.navigate(
+                                  Screens.CustomerInfo.navigationString(customerId)
+                              )
+                          }) {
+                              Icon(
+                                  imageVector = Icons.Outlined.Info,
+                                  contentDescription = "Customer Information Icon"
+                              )
+                          }
                 },
                 elevation = 0.dp
             )

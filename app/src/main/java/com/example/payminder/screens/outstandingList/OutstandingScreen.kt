@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
@@ -33,7 +32,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.rememberNavController
-import androidx.work.WorkInfo
 import com.example.payminder.R
 import com.example.payminder.createGoogleClient
 import com.example.payminder.database.entities.Customer
@@ -79,7 +77,7 @@ fun OutstandingScreen(
     val viewModel = remember { ViewModelProvider(graphEntry).get(OutStandingListVM::class.java) }
     val customers by viewModel.filteredCustomers.collectAsState(initial = null)
     val period by viewModel.loadDetails.observeAsState()
-    val intimationStatus by viewModel.intimationSendingStatus.observeAsState()
+    val isIntimationRunning by viewModel.isIntimationRunning.observeAsState(false)
     val searchQuery by viewModel.searchQuery.collectAsState()
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         //Do something with the selected content Uri here
@@ -140,7 +138,7 @@ fun OutstandingScreen(
                         }
 
                         IconButton(onClick = {
-                            if (intimationRunning(intimationStatus))
+                            if (isIntimationRunning)
                                 toast(context, R.string.cannot_load_while_intimating)
                             else
                                 filePicker.launch("application/vnd.ms-excel")
@@ -152,7 +150,7 @@ fun OutstandingScreen(
                         }
 
                         IconButton(onClick = {
-                            if (intimationRunning(intimationStatus))
+                            if (isIntimationRunning)
                                 toast(context, R.string.cannot_sign_out_while_intimating)
                             else
                                 viewModel.showSignOutConfirmation()
@@ -170,7 +168,7 @@ fun OutstandingScreen(
                 SearchBar(query = searchQuery!!, onQueryChange = viewModel::setSearchQuery)
             }
 
-            if (intimationRunning(intimationStatus))
+            if (isIntimationRunning)
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colors.secondary
@@ -234,7 +232,7 @@ fun OutstandingScreen(
                     toast(context, R.string.sms_permission_not_available)
 
             },
-            isVisible = !intimationRunning(intimationStatus)
+            isVisible = !isIntimationRunning
         )
 
         DisplayLoadingStatus(
@@ -368,13 +366,6 @@ private fun DisplayLoadingStatus(
         }
 
     }
-}
-
-
-private fun intimationRunning(workInfo: List<WorkInfo>?): Boolean {
-    return workInfo?.let {
-        it.isNotEmpty() && it.first().state == WorkInfo.State.RUNNING
-    } ?: false
 }
 
 
