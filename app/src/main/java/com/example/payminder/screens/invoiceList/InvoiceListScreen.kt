@@ -13,12 +13,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import com.example.payminder.R
 import com.example.payminder.database.entities.Invoice
+import com.example.payminder.screens.InvoiceListScreenArgs
 import com.example.payminder.screens.Screens
 import com.example.payminder.ui.LoadingScreen
 import com.example.payminder.ui.TitleText
@@ -26,8 +28,7 @@ import com.example.payminder.ui.TitleText
 
 @Composable
 fun InvoiceListScreen(
-    customerId: Int,
-    customerName: String,
+    args:InvoiceListScreenArgs,
     navController: NavController
 ) {
 
@@ -48,14 +49,14 @@ fun InvoiceListScreen(
                 },
                 title = {
                     TitleText(
-                        title = customerName,
+                        title = args.customerName,
                         subtitle = stringResource(id = R.string.outstanding_invoice)
                     )
                 },
                 actions = {
                           IconButton(onClick = {
                               navController.navigate(
-                                  Screens.CustomerInfo.navigationString(customerId)
+                                  Screens.CustomerInfo.navigationString(args.customerId)
                               )
                           }) {
                               Icon(
@@ -74,7 +75,7 @@ fun InvoiceListScreen(
     }
 
     DisposableEffect(true) {
-        viewModel.loadInvoiceOfCustomer(customerId)
+        viewModel.loadInvoiceOfCustomer(args.customerId)
         onDispose { }
     }
 
@@ -110,5 +111,23 @@ private fun InvoiceList(
             }
 
         }
+    }
+}
+
+@Composable
+private fun CustomLayout(
+    content: @Composable ()->Unit
+){
+    Layout(content = content){measurables,constraints->
+
+        val firstMeasurable = measurables.first()
+        firstMeasurable.parentData
+
+        layout(
+           constraints.maxWidth,
+           constraints.maxHeight
+       ){
+
+       }
     }
 }

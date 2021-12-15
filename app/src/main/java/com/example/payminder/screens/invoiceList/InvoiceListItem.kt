@@ -1,5 +1,6 @@
 package com.example.payminder.screens.invoiceList
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
 import androidx.compose.material.Icon

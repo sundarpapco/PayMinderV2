@@ -1,6 +1,7 @@
 package com.example.payminder.screens
 
 import androidx.navigation.NavBackStackEntry
+import java.net.URLDecoder
 import java.net.URLEncoder
 
 
@@ -12,8 +13,8 @@ sealed class Screens(val route: String) {
 
     object InvoiceList : Screens("InvoiceList/{customerId}/{customerName}") {
 
-        const val ARG_CUSTOMER_ID = "customerId"
-        const val ARG_CUSTOMER_NAME = "customerName"
+        private const val ARG_CUSTOMER_ID = "customerId"
+        private const val ARG_CUSTOMER_NAME = "customerName"
 
         fun navigationString(customerId: Int, customerName: String): String {
 
@@ -23,6 +24,20 @@ sealed class Screens(val route: String) {
                 customerName
 
             return "InvoiceList/${customerId}/${encodedName}"
+        }
+
+        fun getArgs(navEntry:NavBackStackEntry):InvoiceListScreenArgs{
+
+            val customerId=navEntry.arguments?.getString(ARG_CUSTOMER_ID)?.toInt()
+                ?: error("CustomerId argument not found in InvoiceListScreen")
+
+            val customerName=navEntry.arguments?.getString(ARG_CUSTOMER_NAME)
+                ?: error("Customer name argument not found in InvoiceListScreen")
+
+            return InvoiceListScreenArgs(
+                customerId,
+                URLDecoder.decode(customerName,"UTF-8")
+            )
         }
 
     }
@@ -41,6 +56,6 @@ sealed class Screens(val route: String) {
         }
 
     }
-
-
 }
+
+data class InvoiceListScreenArgs(val customerId: Int, val customerName: String)

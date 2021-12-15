@@ -13,7 +13,6 @@ import com.example.payminder.screens.invoiceList.InvoiceListScreen
 import com.example.payminder.screens.outstandingList.OutstandingScreen
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import java.net.URLDecoder
 
 @FlowPreview
 @ExperimentalCoroutinesApi
@@ -35,16 +34,8 @@ fun PayMinderUI() {
         }
 
         composable(Screens.InvoiceList.route) {
-            val customerId: Int =
-                it.arguments?.getString(Screens.InvoiceList.ARG_CUSTOMER_ID)?.toInt()
-                    ?: error("Customer ID Argument not found")
-
-            val customerName = it.arguments?.getString(Screens.InvoiceList.ARG_CUSTOMER_NAME)
-                ?: error("Customer Name Argument not found")
-
             InvoiceListScreen(
-                customerId = customerId,
-                customerName = URLDecoder.decode(customerName,"UTF-8"),
+                args=Screens.InvoiceList.getArgs(it),
                 navController = navController
             )
         }
