@@ -1,18 +1,20 @@
-package com.example.payminder.util
+package com.example.payminder.excel
 
 import androidx.core.text.isDigitsOnly
 import com.example.payminder.database.entities.Customer
 import com.example.payminder.database.entities.Invoice
 import com.example.payminder.database.entities.LoadDetails
-import jxl.Sheet
-import jxl.Workbook
+import com.example.payminder.util.round
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
+import org.apache.poi.ss.usermodel.DataFormatter
+import org.apache.poi.ss.usermodel.Row
+import org.apache.poi.ss.usermodel.Sheet
+import org.apache.poi.ss.usermodel.WorkbookFactory
+import java.io.FileInputStream
 import java.util.*
 import kotlin.collections.HashMap
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class ExcelFileParser(private val filePath: String) {
 
     companion object {
@@ -35,10 +37,21 @@ class ExcelFileParser(private val filePath: String) {
     private fun isValidFile(sheet: Sheet): Boolean {
 
         //getCell(Column,Row)
+        var billsReceivableField = ""
+        var partyNameField = ""
+
         return try {
-            val billsReceivableField = sheet.getCell(0, 3).contents
-            val partyNameFieldData = sheet.getCell(7, 5).contents
-            billsReceivableField == "Bills Receivable" && partyNameFieldData == "Party's Name"
+
+            sheet.getRow(3)?.let{
+                billsReceivableField = it.getCell(0).stringCellValue
+            } ?: return false
+
+            sheet.getRow(5)?.let{
+                partyNameField = it.getCell(7).stringCellValue
+            } ?: return false
+
+            return billsReceivableField == "Bills Receivable" && partyNameField == "Party's Name"
+
         } catch (e: Exception) {
             //If there is any exception while checking the file itself, then return false for file invalid
             false
@@ -48,11 +61,9 @@ class ExcelFileParser(private val filePath: String) {
 
     private fun parseDataFromFile(): ParsedRawData {
 
-        val file = File(filePath)
-        check(file.exists()) { "File not found while trying to parse" }
-
-        val workbook = Workbook.getWorkbook(file)
-        val workSheet = workbook.getSheet(0)
+        val inputStream = FileInputStream(filePath)
+        val workBook = WorkbookFactory.create(inputStream)
+        val workSheet = workBook.getSheetAt(0)
 
         require(isValidFile(workSheet)) { "Invalid File format" }
 
@@ -61,38 +72,40 @@ class ExcelFileParser(private val filePath: String) {
         val loadDetails = readLoadDetail(workSheet)
         val parsedList = LinkedList<ParsedRow>()
         var currentRow = DATA_STARTING_ROW
+        var row:Row
 
-        //worksheet.rows will give us how many rows are there in the excel sheet. Since we need
-        //to ignore the last row which is total, we are using worksheet.rows-1
-        while (currentRow < workSheet.rows - 1) {
+        //to ignore the last row which is total, we are using < instead of <= worksheet.lastRowNum
+        while (currentRow < workSheet.lastRowNum) {
+
+            row = workSheet.getRow(currentRow)
 
             val data = ParsedRow().apply {
-                invoiceDate = workSheet.getCell(COLUMN_INVOICE_DATE, currentRow).contents
-                invoiceNumber = workSheet.getCell(COLUMN_INVOICE_NUMBER, currentRow).contents
+                invoiceDate = DataFormatter().formatCellValue(row.getCell(COLUMN_INVOICE_DATE))
+                invoiceNumber = row.getCell(COLUMN_INVOICE_NUMBER).stringCellValue
 
-                mobile1 = workSheet.getCell(COLUMN_MOBILE1, currentRow).contents.trim()
+                mobile1 = row.getCell(COLUMN_MOBILE1).stringCellValue.trim()
                 //removing space between numbers
-                mobile1 = mobile1.replace(" ","")
+                mobile1 = mobile1.replace(" ", "")
                 checkMobileNumber(mobile1, currentRow + 1)
 
-                mobile2 = workSheet.getCell(COLUMN_MOBILE2, currentRow).contents.trim()
+                mobile2 = row.getCell(COLUMN_MOBILE2).stringCellValue.trim()
                 //removing spaces between numbers
-                mobile2 = mobile2.replace(" ","")
+                mobile2 = mobile2.replace(" ", "")
                 checkMobileNumber(mobile2, currentRow + 1)
 
-                email1 = workSheet.getCell(COLUMN_EMAIL1, currentRow).contents.trim()
+                email1 = row.getCell(COLUMN_EMAIL1 ).stringCellValue.trim()
                 checkEmail(email1, currentRow + 1)
 
-                email2 = workSheet.getCell(COLUMN_EMAIL2, currentRow).contents.trim()
-                checkEmail(email2, currentRow + 1)
+                email2 = row.getCell(COLUMN_EMAIL2 ).stringCellValue.trim()
+                checkEmail(email2,currentRow  + 1)
 
-                email3 = workSheet.getCell(COLUMN_EMAIL3, currentRow).contents.trim()
-                checkEmail(email3, currentRow + 1)
+                email3 = row.getCell(COLUMN_EMAIL3 ).stringCellValue.trim()
+                checkEmail(email3,currentRow  + 1)
 
-                partyName = workSheet.getCell(COLUMN_PARTY_NAME, currentRow).contents
-                invoiceAmount = workSheet.getCell(COLUMN_INVOICE_AMOUNT, currentRow).contents
+                partyName = row.getCell(COLUMN_PARTY_NAME ).stringCellValue
+                invoiceAmount = row.getCell(COLUMN_INVOICE_AMOUNT ).numericCellValue
                 daysSinceInvoiced =
-                    workSheet.getCell(COLUMN_DAYS_SINCE_INVOICE, currentRow).contents.toInt()
+                    row.getCell(COLUMN_DAYS_SINCE_INVOICE ).stringCellValue.toInt()
 
             }
 
@@ -101,14 +114,21 @@ class ExcelFileParser(private val filePath: String) {
 
         }
 
-        workbook.close()
+        inputStream.close()
         return ParsedRawData(loadDetails, parsedList)
     }
 
-    private fun readLoadDetail(sheet: Sheet) =
-        LoadDetails().apply {
-            period = sheet.getCell(0, 4).contents.split("to").last().trim()
+    private fun readLoadDetail(sheet: Sheet):LoadDetails{
+
+        val fourthRow = sheet.getRow(4)
+        require(fourthRow != null) {"Error while trying to read Load details (5th row)"}
+
+        return LoadDetails().apply {
+            period = fourthRow.getCell(0)?.stringCellValue?.split("to")?.last()?.trim()
+                ?: error("Error while fetching the Load detail (First column of 5th row)")
         }
+    }
+
 
 
     suspend fun readData(): ParsedData =
@@ -150,16 +170,16 @@ class ExcelFileParser(private val filePath: String) {
                     Two double quote characters in the front of the amount. So, we need to remove those
                     double quotes before trying to convert it in to Double. Else it will throw exception
                      */
-                    val invoiceAmount = it.invoiceAmount.replace("\"", "").toDouble()
-                    totalOutstanding += invoiceAmount
+                    //val invoiceAmount = it.invoiceAmount.replace("\"", "").toDouble()
+                    totalOutstanding += it.invoiceAmount
                     if (it.daysSinceInvoiced > 30)
-                        overDueAmount += invoiceAmount
+                        overDueAmount += it.invoiceAmount
 
                     Invoice().apply {
                         this.customerId = customerId
                         number = it.invoiceNumber
                         date = it.invoiceDate
-                        amount = invoiceAmount
+                        amount = it.invoiceAmount
                         daysSinceInvoiced = it.daysSinceInvoiced
                         overdueByDays = if (it.daysSinceInvoiced > 30)
                             it.daysSinceInvoiced - 30
@@ -188,28 +208,4 @@ class ExcelFileParser(private val filePath: String) {
         }
         android.util.Patterns.PHONE
     }
-
-    data class ParsedData(
-        val detail: LoadDetails,
-        val data: Map<Customer, List<Invoice>>
-    )
-
 }
-
-private data class ParsedRawData(
-    val detail: LoadDetails,
-    val parsedRows: List<ParsedRow>
-)
-
-private data class ParsedRow(
-    var invoiceDate: String = "",
-    var invoiceNumber: String = "",
-    var mobile1: String = "",
-    var mobile2: String = "",
-    var email1: String = "",
-    var email2: String = "",
-    var email3: String = "",
-    var partyName: String = "",
-    var invoiceAmount: String = "0.00",
-    var daysSinceInvoiced: Int = 0
-)
