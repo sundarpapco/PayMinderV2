@@ -11,9 +11,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -35,6 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.payminder.R
 import com.example.payminder.createGoogleClient
 import com.example.payminder.database.entities.Customer
+import com.example.payminder.screens.FilterModalBottomSheet
 import com.example.payminder.screens.Screens
 import com.example.payminder.ui.*
 import com.example.payminder.ui.theme.PayMinderTheme
@@ -43,6 +43,7 @@ import com.example.payminder.util.isPermissionsGranted
 import com.example.payminder.util.toast
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.launch
 
 
 val LocalSentIcon = staticCompositionLocalOf<Painter> {
@@ -64,21 +65,64 @@ val LocalOverdueIcon = staticCompositionLocalOf<Painter> {
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-@ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
 fun OutstandingScreen(
     navController: NavController
 ) {
-
-    val context = LocalContext.current
-    var fabState by remember { mutableStateOf(MultiFabState.COLLAPSED) }
     val graphEntry = remember { navController.getBackStackEntry(Screens.Outstanding.route) }
     val viewModel = remember { ViewModelProvider(graphEntry).get(OutStandingListVM::class.java) }
+    val filterSheetState =
+        remember { ModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden) }
+    val filter by viewModel.filter.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    ModalBottomSheetLayout(
+        sheetState = filterSheetState,
+        sheetShape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp),
+        sheetElevation = 0.dp,
+        scrimColor = MaterialTheme.colors.background.copy(0.7f),
+        sheetContent = {
+            FilterModalBottomSheet(
+                filter,
+                onApply = {
+                    scope.launch { filterSheetState.hide() }
+                    viewModel.applyFilter(it)
+                },
+                onClear = {
+                    scope.launch { filterSheetState.hide() }
+                    viewModel.clearFilter()
+                }
+            )
+        }
+    ) {
+        OutstandingScreenContent(
+            viewModel = viewModel,
+            navController = navController,
+            filterSheetState = filterSheetState,
+            isFilterEnabled = filter.isFilterEnabled()
+        )
+    }
+}
+
+
+@ExperimentalMaterialApi
+@ExperimentalCoroutinesApi
+@FlowPreview
+@Composable
+private fun OutstandingScreenContent(
+    viewModel: OutStandingListVM,
+    navController: NavController,
+    filterSheetState: ModalBottomSheetState,
+    isFilterEnabled: Boolean
+) {
+    val context = LocalContext.current
+    var fabState by remember { mutableStateOf(MultiFabState.COLLAPSED) }
     val customers by viewModel.filteredCustomers.collectAsState(initial = null)
     val period by viewModel.loadDetails.observeAsState()
     val isIntimationRunning by viewModel.isIntimationRunning.observeAsState(false)
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         //Do something with the selected content Uri here
         it?.let { uri ->
@@ -87,6 +131,54 @@ fun OutstandingScreen(
     }
     val permissionSeeker =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+
+    val topBarActions by remember(isFilterEnabled) {
+
+        mutableStateOf(
+            listOf(
+
+                OverflowMenuItem(
+                    1,
+                    context.getString(R.string.search),
+                    R.drawable.ic_search
+                ) {
+                    viewModel.setSearchQuery("")
+                },
+
+                OverflowMenuItem(
+                    id = 2,
+                    label = context.getString(R.string.filter),
+                    iconId = if (isFilterEnabled)
+                        R.drawable.ic_filter_on
+                    else
+                        R.drawable.ic_filter_off
+
+                ) {
+                    coroutineScope.launch { filterSheetState.show() }
+                },
+
+                OverflowMenuItem(
+                    3,
+                    context.getString(R.string.load_file),
+                    null
+                ) {
+                    if (isIntimationRunning)
+                        toast(context, R.string.cannot_load_while_intimating)
+                    else
+                        filePicker.launch("application/vnd.ms-excel")
+                },
+
+                OverflowMenuItem(
+                    4,
+                    context.getString(R.string.sign_out),
+                    null
+                ) {
+                    viewModel.showSignOutConfirmation()
+                }
+            )
+        )
+    }
+
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -127,40 +219,7 @@ fun OutstandingScreen(
                         )
                     },
                     actions = {
-
-                        IconButton(onClick = {
-                            viewModel.setSearchQuery("")
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
-                                contentDescription = "Search"
-                            )
-                        }
-
-                        IconButton(onClick = {
-                            if (isIntimationRunning)
-                                toast(context, R.string.cannot_load_while_intimating)
-                            else
-                                filePicker.launch("application/vnd.ms-excel")
-                        }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_file_upload),
-                                contentDescription = "Load file"
-                            )
-                        }
-
-                        IconButton(onClick = {
-                            if (isIntimationRunning)
-                                toast(context, R.string.cannot_sign_out_while_intimating)
-                            else
-                                viewModel.showSignOutConfirmation()
-                        }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_logout_24),
-                                contentDescription = "Log out"
-
-                            )
-                        }
+                        ActionMenu(items = topBarActions)
                     },
                     elevation = 0.dp
                 )
@@ -265,6 +324,7 @@ fun OutstandingScreen(
     }
 }
 
+
 @Composable
 private fun FabScrim(
     onClick: () -> Unit
@@ -304,7 +364,7 @@ private fun CustomersList(
     onSendMessageToCustomer: (Int) -> Unit,
     onClick: (id: Int, name: String) -> Unit,
 ) {
-    
+
     //Providing all the drawable Icons necessary in order to boost the scrolling smoothness
     CompositionLocalProvider(
         LocalSentIcon provides painterResource(id = R.drawable.ic_done),
@@ -321,7 +381,7 @@ private fun CustomersList(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            item {
+           item(key = "customer list top spacing") {
                 Spacer(Modifier.height(24.dp))
             }
 
@@ -337,11 +397,11 @@ private fun CustomersList(
                 )
             }
 
-            item {
+            item(key="customer list bottom spacing") {
                 Spacer(Modifier.height(100.dp))
             }
         }
-        
+
     }
 }
 
@@ -429,7 +489,7 @@ private fun SearchBar(
                 .fillMaxWidth()
                 .focusRequester(searchBarFocus),
             value = query,
-            onValueChange = { onQueryChange(it)},
+            onValueChange = { onQueryChange(it) },
             placeholder = {
                 Text(
                     stringResource(id = R.string.search),

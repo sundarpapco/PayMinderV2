@@ -1,5 +1,6 @@
 package com.example.payminder.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,18 +12,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.payminder.R
 import com.example.payminder.ui.theme.PayMinderTheme
 
 data class OverflowMenuItem(
     val id: Int,
     val label: String,
-    val iconId: Int? = null
+    val iconId: Int? = null,
+    val onClick:()->Unit
 )
 
 @Composable
 fun OverFlowMenu(
     items: List<OverflowMenuItem>,
-    onClick: (OverflowMenuItem) -> Unit,
     onDismiss: (() -> Unit)? = null,
 ) {
 
@@ -51,7 +53,7 @@ fun OverFlowMenu(
             items.forEach {
                 DropdownMenuItem(onClick = {
                     expanded = !expanded
-                    onClick(it)
+                    it.onClick()
                 }) {
 
                     it.iconId?.let { id ->
@@ -67,6 +69,30 @@ fun OverFlowMenu(
     }
 }
 
+@Composable
+fun ActionMenu(
+    items: List<OverflowMenuItem>,
+    onDismiss: (() -> Unit)? = null,
+){
+
+    val actionItems = remember(items){items.filter { it.iconId != null }}
+    val overflowItems = remember(items){items.filter { it.iconId==null }}
+
+    for(item in actionItems){
+
+        IconButton(onClick = {
+            item.onClick()
+        }) {
+            Icon(
+                painterResource(id = item.iconId!!),
+                contentDescription = null
+            )
+        }
+    }
+
+    OverFlowMenu(items = overflowItems, onDismiss = onDismiss)
+}
+
 
 @Preview
 @Composable
@@ -74,8 +100,8 @@ private fun OverFlowMenuPreview() {
 
     val menuItems = remember {
         listOf(
-            OverflowMenuItem(1, "Send Email"),
-            OverflowMenuItem(2, "Send Message")
+            OverflowMenuItem(1, "Send Email"){},
+            OverflowMenuItem(2, "Send Message"){}
         )
     }
 
@@ -86,7 +112,7 @@ private fun OverFlowMenuPreview() {
                 .background(MaterialTheme.colors.background),
             contentAlignment = Alignment.CenterEnd
         ) {
-            OverFlowMenu(items = menuItems, onDismiss = { }, onClick = {})
+            OverFlowMenu(items = menuItems, onDismiss = { })
         }
     }
 

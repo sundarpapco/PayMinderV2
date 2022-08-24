@@ -42,11 +42,11 @@ class ExcelFileParser(private val filePath: String) {
 
         return try {
 
-            sheet.getRow(3)?.let{
+            sheet.getRow(3)?.let {
                 billsReceivableField = it.getCell(0).stringCellValue
             } ?: return false
 
-            sheet.getRow(5)?.let{
+            sheet.getRow(5)?.let {
                 partyNameField = it.getCell(7).stringCellValue
             } ?: return false
 
@@ -72,7 +72,7 @@ class ExcelFileParser(private val filePath: String) {
         val loadDetails = readLoadDetail(workSheet)
         val parsedList = LinkedList<ParsedRow>()
         var currentRow = DATA_STARTING_ROW
-        var row:Row
+        var row: Row
 
         //to ignore the last row which is total, we are using < instead of <= worksheet.lastRowNum
         while (currentRow < workSheet.lastRowNum) {
@@ -93,19 +93,19 @@ class ExcelFileParser(private val filePath: String) {
                 mobile2 = mobile2.replace(" ", "")
                 checkMobileNumber(mobile2, currentRow + 1)
 
-                email1 = row.getCell(COLUMN_EMAIL1 ).stringCellValue.trim()
+                email1 = row.getCell(COLUMN_EMAIL1).stringCellValue.trim()
                 checkEmail(email1, currentRow + 1)
 
-                email2 = row.getCell(COLUMN_EMAIL2 ).stringCellValue.trim()
-                checkEmail(email2,currentRow  + 1)
+                email2 = row.getCell(COLUMN_EMAIL2).stringCellValue.trim()
+                checkEmail(email2, currentRow + 1)
 
-                email3 = row.getCell(COLUMN_EMAIL3 ).stringCellValue.trim()
-                checkEmail(email3,currentRow  + 1)
+                email3 = row.getCell(COLUMN_EMAIL3).stringCellValue.trim()
+                checkEmail(email3, currentRow + 1)
 
-                partyName = row.getCell(COLUMN_PARTY_NAME ).stringCellValue
-                invoiceAmount = row.getCell(COLUMN_INVOICE_AMOUNT ).numericCellValue
+                partyName = row.getCell(COLUMN_PARTY_NAME).stringCellValue
+                invoiceAmount = row.getCell(COLUMN_INVOICE_AMOUNT).numericCellValue
                 daysSinceInvoiced =
-                    row.getCell(COLUMN_DAYS_SINCE_INVOICE ).stringCellValue.toInt()
+                    row.getCell(COLUMN_DAYS_SINCE_INVOICE).stringCellValue.toInt()
 
             }
 
@@ -118,17 +118,16 @@ class ExcelFileParser(private val filePath: String) {
         return ParsedRawData(loadDetails, parsedList)
     }
 
-    private fun readLoadDetail(sheet: Sheet):LoadDetails{
+    private fun readLoadDetail(sheet: Sheet): LoadDetails {
 
         val fourthRow = sheet.getRow(4)
-        require(fourthRow != null) {"Error while trying to read Load details (5th row)"}
+        require(fourthRow != null) { "Error while trying to read Load details (5th row)" }
 
         return LoadDetails().apply {
             period = fourthRow.getCell(0)?.stringCellValue?.split("to")?.last()?.trim()
                 ?: error("Error while fetching the Load detail (First column of 5th row)")
         }
     }
-
 
 
     suspend fun readData(): ParsedData =
@@ -148,12 +147,10 @@ class ExcelFileParser(private val filePath: String) {
                 val customer = Customer().apply {
                     val parsedRow = parsedRows.first()
                     val cityAndName = parsedRow.partyName.split(",")
-                    if (cityAndName.size == 2) {
-                        city = cityAndName.first().trim()
-                        name = cityAndName.last().trim()
-                    } else {
-                        name = cityAndName.first()
-                    }
+
+                    check(cityAndName.size >= 2) { "Invalid Customer name and city for ${parsedRow.partyName}" }
+                    city = cityAndName[0].trim()
+                    name = cityAndName[1].trim()
 
                     id = customerId
                     mobile1 = parsedRow.mobile1

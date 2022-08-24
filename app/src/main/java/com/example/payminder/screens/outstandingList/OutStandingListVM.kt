@@ -39,13 +39,14 @@ class OutStandingListVM(
     val loadDetails = repository.getLoadDetailLiveData()
     var confirmationDialogState: ConfirmationDialogState<*>? by mutableStateOf(null)
     private val _searchQuery = MutableStateFlow<String?>(null)
-    val searchQuery:StateFlow<String?> = _searchQuery
+    val searchQuery: StateFlow<String?> = _searchQuery
+    val filter = MutableStateFlow(CustomerListFilter())
     val filteredCustomers = MutableStateFlow<List<Customer>?>(null)
     val isIntimationRunning = MediatorLiveData<Boolean>()
 
     init {
 
-        isIntimationRunning.addSource(IntimationWorker.getWorkStatusLiveData(context)){workInfo->
+        isIntimationRunning.addSource(IntimationWorker.getWorkStatusLiveData(context)) { workInfo ->
             isIntimationRunning.value = workInfo?.let {
                 it.isNotEmpty() && it.first().state == WorkInfo.State.RUNNING
             } ?: false
@@ -58,8 +59,17 @@ class OutStandingListVM(
         _searchQuery.value = newQuery
     }
 
+    fun applyFilter(newFilter:CustomerListFilter) {
+        filter.value = newFilter
+    }
+
+    fun clearFilter(){
+        filter.value=CustomerListFilter()
+    }
+
+
     private fun loadCustomers() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.getAllCustomersFlow()
                 .combine(searchQuery.debounce { if (it != null) 300 else 0 }) { customers, query ->
                     //ToDO: Save the searchQuery in the saved state handle here
@@ -69,8 +79,9 @@ class OutStandingListVM(
                                 .contains(it.lowercase(Locale.getDefault()))
                         }
                     } ?: customers
-                }.flowOn(Dispatchers.Default)
-                .collect {
+                }.combine(filter) { customers, customerFilter ->
+                    customerFilter.apply(customers)
+                }.collect {
                     filteredCustomers.value = it
                 }
         }

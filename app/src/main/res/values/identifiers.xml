@@ -14,6 +14,10 @@
     <item name="mnu_send_mail" type="id"/>
     <item name="fab_send_mail" type="id"/>
     <item name="fab_send_message" type="id"/>
+    <item name="mnu_sign_out" type="id"/>
+    <item name="mnu_search" type="id"/>
+    <item name="mnu_filter" type="id"/>
+    <item name="mnu_load_file" type="id"/>
 
 
 </resources>

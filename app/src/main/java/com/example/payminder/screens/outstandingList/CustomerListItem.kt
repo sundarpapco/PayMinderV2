@@ -1,6 +1,5 @@
 package com.example.payminder.screens.outstandingList
 
-import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -24,8 +23,6 @@ import com.example.payminder.ui.OverflowMenuItem
 import com.example.payminder.ui.theme.NeutralOrange
 import com.example.payminder.ui.theme.PayMinderTheme
 import com.example.payminder.ui.theme.SuccessGreen
-import com.example.payminder.util.isPermissionsGranted
-import com.example.payminder.util.toast
 
 @ExperimentalMaterialApi
 @Composable
@@ -54,19 +51,22 @@ fun CustomerListItem(
             modifier = Modifier.fillMaxWidth()
         ) {
             OverFlowMenu(
-                items = overflowMenuItems(context),
-                onClick = {
+                items = listOf(
 
-                    if (context.isPermissionsGranted()) {
-                        if (it.id == R.id.mnu_send_mail)
-                            onSendMail(customer.id)
+                    OverflowMenuItem(R.id.mnu_send_mail,
+                        context.getString(R.string.send_mail)
+                    ) {
+                        onSendMail(customer.id)
+                    },
 
-                        if (it.id == R.id.mnu_send_message)
-                            onSendMessage(customer.id)
-                    } else
-                        toast(context, R.string.sms_permission_not_available)
-
-                })
+                    OverflowMenuItem(
+                        R.id.mnu_send_message,
+                        context.getString(R.string.send_message)
+                    ) {
+                        onSendMessage(customer.id)
+                    }
+                )
+            )
         }
 
         Column(
@@ -93,7 +93,7 @@ fun CustomerListItem(
                     mailSent = customer.emailSent,
                     messageSent = customer.smsSent,
                     isThereOverdue = customer.overdueAmount > 0.0,
-                    sentIcon=sentIcon,
+                    sentIcon = sentIcon,
                     notSentIcon = notSentIcon
                 )
 
@@ -117,7 +117,7 @@ private fun NameAndCity(
             style = MaterialTheme.typography.subtitle1,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(end=30.dp)
+            modifier = Modifier.padding(end = 30.dp)
         )
         Text(
             text = city,
@@ -125,7 +125,7 @@ private fun NameAndCity(
             color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(end=30.dp)
+            modifier = Modifier.padding(end = 30.dp)
         )
     }
 }
@@ -134,8 +134,8 @@ private fun NameAndCity(
 private fun PendingAmount(
     totalAmount: String,
     overdueAmount: String,
-    totalAmountIcon:Painter,
-    overdueIcon:Painter,
+    totalAmountIcon: Painter,
+    overdueIcon: Painter,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -186,7 +186,7 @@ private fun MailAndMessageDetails(
     mailSent: Boolean,
     messageSent: Boolean,
     isThereOverdue: Boolean,
-    sentIcon:Painter,
+    sentIcon: Painter,
     notSentIcon: Painter,
     modifier: Modifier = Modifier
 ) {
@@ -262,12 +262,6 @@ private fun MailAndMessageDetails(
         }
     }
 }
-
-private fun overflowMenuItems(context: Context): List<OverflowMenuItem> =
-    listOf(
-        OverflowMenuItem(R.id.mnu_send_mail, context.getString(R.string.send_mail)),
-        OverflowMenuItem(R.id.mnu_send_message, context.getString(R.string.send_message))
-    )
 
 
 @ExperimentalMaterialApi

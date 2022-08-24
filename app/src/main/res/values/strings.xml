@@ -34,6 +34,7 @@
     <string name="confirm_sign_out">Are you sure want to sign out?</string>
     <string name="send">Send</string>
     <string name="sign_out">Sign Out</string>
+    <string name="load_file">Load XL file</string>
 
     <string name="channel_name_intimation">Intimation Sending</string>
     <string name="sending_email_intimation">Sending Email Intimations</string>
@@ -57,5 +58,18 @@
     <string name="sms_failure_network_rejection">Network rejected the request</string>
     <string name="sms_failure_unknown_error">Unknown Error</string>
     <string name="sms_permission_not_available">Permission Denied. Please grant all permissions for this app in Settings</string>
+
+
+    <!-- Filter screen -->
+    <string name="filter_by">Filter By</string>
+    <string name="email_address">Email address</string>
+    <string name="have">Have</string>
+    <string name="not_have">Don\'t Have</string>
+    <string name="all">All</string>
+    <string name="mobile_number">Mobile number</string>
+    <string name="overdue">Overdue</string>
+    <string name="sent">Sent</string>
+    <string name="not_sent">Didn\'t sent</string>
+    <string name="filter">Filter</string>
 
 </resources>
