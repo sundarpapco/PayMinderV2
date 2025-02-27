@@ -424,6 +424,9 @@ private fun DisplayLoadingStatus(
         is LoadingStatus.Error -> {
             onLoadFailed(loadingStatus.error)
         }
+        else ->{
+
+        }
 
     }
 }

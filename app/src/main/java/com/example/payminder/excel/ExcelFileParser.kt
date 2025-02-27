@@ -19,7 +19,8 @@ class ExcelFileParser(private val filePath: String) {
 
     companion object {
 
-        private const val DATA_STARTING_ROW = 7
+        private const val DATA_STARTING_ROW = 9
+        private const val DATA_PERIOD_ROW = 5
 
         private const val COLUMN_INVOICE_DATE = 0
         private const val COLUMN_INVOICE_NUMBER = 1
@@ -42,11 +43,11 @@ class ExcelFileParser(private val filePath: String) {
 
         return try {
 
-            sheet.getRow(3)?.let {
+            sheet.getRow(4)?.let {
                 billsReceivableField = it.getCell(0).stringCellValue
             } ?: return false
 
-            sheet.getRow(5)?.let {
+            sheet.getRow(7)?.let {
                 partyNameField = it.getCell(7).stringCellValue
             } ?: return false
 
@@ -120,7 +121,7 @@ class ExcelFileParser(private val filePath: String) {
 
     private fun readLoadDetail(sheet: Sheet): LoadDetails {
 
-        val fourthRow = sheet.getRow(4)
+        val fourthRow = sheet.getRow(DATA_PERIOD_ROW)
         require(fourthRow != null) { "Error while trying to read Load details (5th row)" }
 
         return LoadDetails().apply {
