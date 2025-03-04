@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -107,8 +108,9 @@ fun OutstandingScreen(
 ) {
     val graphEntry = remember { navController.currentBackStackEntry }
     val viewModel = remember { ViewModelProvider(graphEntry!!)[OutStandingListVM::class.java] }
+    val density = LocalDensity.current
     val filterSheetState =
-        remember { ModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden) }
+        remember { ModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden, density = density) }
     val filter by viewModel.filter.collectAsState()
     val scope = rememberCoroutineScope()
 

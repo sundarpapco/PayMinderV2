@@ -1,21 +1,21 @@
 [versions]
-activityCompose = "1.4.0"
-coreKtx = "1.7.0"
-espressoCore = "3.4.0"
+activityCompose = "1.10.1"
+coreKtx = "1.15.0"
+espressoCore = "3.6.1"
 googleApiClientAndroid = "1.20.0"
 googleApiServicesGmail = "v1-rev96-1.25.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 leakcanaryAndroid = "2.7"
-lifecycleRuntimeKtx = "2.4.0"
+lifecycleRuntimeKtx = "2.8.7"
 listenablefuture = "9999.0-empty-to-avoid-conflict-with-guava"
-material = "1.4.0"
-compose = "1.2.1"
+material = "1.12.0"
+compose = "1.7.8"
 navigationCompose = "2.8.8"
-playServicesAuth = "19.2.0"
+playServicesAuth = "21.3.0"
 apachePoi = "3.9"
 room = "2.6.1"
-workRuntimeKtx = "2.7.1"
+workRuntimeKtx = "2.10.0"
 kotlin-serialization="1.8.0"
 kotlin="2.1.10"
 ksp="2.1.10-1.0.31"
@@ -27,10 +27,12 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
-material = { module = "com.google.android.material:material", version.ref = "material" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junitVersion" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
+
+#material
+material = { module = "com.google.android.material:material", version.ref = "material" }
 
 #Compose
 androidx-material = { module = "androidx.compose.material:material", version.ref = "compose" }
@@ -39,6 +41,7 @@ androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", versi
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
 androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "compose" }
+material-icons={module="androidx.compose.material:material-icons-extended",version.ref="compose"}
 
 #Room
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
