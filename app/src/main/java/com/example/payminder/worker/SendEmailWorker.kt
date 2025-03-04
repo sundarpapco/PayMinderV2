@@ -5,9 +5,11 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.app.NotificationManagerCompat
@@ -117,10 +119,13 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         return Result.success()
     }
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override suspend fun getForegroundInfo(): ForegroundInfo {
-        return ForegroundInfo(
-            NOTIFICATION_ID_PROGRESS, notificationBuilder.build()
-        )
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            ForegroundInfo(NOTIFICATION_ID_PROGRESS,notificationBuilder.build(),ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING)
+        else
+            ForegroundInfo(NOTIFICATION_ID_PROGRESS, notificationBuilder.build())
     }
 
 

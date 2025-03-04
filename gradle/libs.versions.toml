@@ -1,0 +1,73 @@
+[versions]
+activityCompose = "1.4.0"
+coreKtx = "1.7.0"
+espressoCore = "3.4.0"
+googleApiClientAndroid = "1.20.0"
+googleApiServicesGmail = "v1-rev96-1.25.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+leakcanaryAndroid = "2.7"
+lifecycleRuntimeKtx = "2.4.0"
+listenablefuture = "9999.0-empty-to-avoid-conflict-with-guava"
+material = "1.4.0"
+compose = "1.2.1"
+navigationCompose = "2.8.8"
+playServicesAuth = "19.2.0"
+apachePoi = "3.9"
+room = "2.6.1"
+workRuntimeKtx = "2.7.1"
+kotlin-serialization="1.8.0"
+kotlin="2.1.10"
+ksp="2.1.10-1.0.31"
+agp="8.8.2"
+
+
+[libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+junit = { module = "junit:junit", version.ref = "junit" }
+androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junitVersion" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
+
+#Compose
+androidx-material = { module = "androidx.compose.material:material", version.ref = "compose" }
+androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "compose" }
+androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
+androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "compose" }
+
+#Room
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room"}
+
+#Navigation in compose
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+kotlinx-serialization={module='org.jetbrains.kotlinx:kotlinx-serialization-json', version.ref="kotlin-serialization"}
+
+#Gmail Access
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+google-api-client-android = { module = "com.google.api-client:google-api-client-android", version.ref = "googleApiClientAndroid" }
+google-api-services-gmail = { module = "com.google.apis:google-api-services-gmail", version.ref = "googleApiServicesGmail" }
+
+#Apache POI for reading XLSX Format
+#https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
+poi = { module = "org.apache.poi:poi", version.ref = "apachePoi" }
+poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "apachePoi" }
+
+#Guava Listenable Future
+listenablefuture = { module = "com.google.guava:listenablefuture", version.ref = "listenablefuture" }
+
+#Leak Canary
+leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
+
+[plugins]
+google-ksp ={id ='com.google.devtools.ksp', version.ref= 'ksp'}
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization-plugin = {id="org.jetbrains.kotlin.plugin.serialization", version.ref="kotlin"}
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

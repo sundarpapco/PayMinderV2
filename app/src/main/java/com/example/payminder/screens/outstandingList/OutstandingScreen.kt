@@ -8,13 +8,40 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -35,8 +62,16 @@ import com.example.payminder.R
 import com.example.payminder.createGoogleClient
 import com.example.payminder.database.entities.Customer
 import com.example.payminder.screens.FilterModalBottomSheet
-import com.example.payminder.screens.Screens
-import com.example.payminder.ui.*
+import com.example.payminder.screens.GoogleSignInScreen
+import com.example.payminder.screens.InvoiceListScreen
+import com.example.payminder.screens.OutstandingScreen
+import com.example.payminder.ui.ActionMenu
+import com.example.payminder.ui.ConfirmationDialog
+import com.example.payminder.ui.ConfirmationDialogState
+import com.example.payminder.ui.LoadingDialog
+import com.example.payminder.ui.LoadingScreen
+import com.example.payminder.ui.OverflowMenuItem
+import com.example.payminder.ui.TitleText
 import com.example.payminder.ui.theme.PayMinderTheme
 import com.example.payminder.util.LoadingStatus
 import com.example.payminder.util.isPermissionsGranted
@@ -70,8 +105,8 @@ val LocalOverdueIcon = staticCompositionLocalOf<Painter> {
 fun OutstandingScreen(
     navController: NavController
 ) {
-    val graphEntry = remember { navController.getBackStackEntry(Screens.Outstanding.route) }
-    val viewModel = remember { ViewModelProvider(graphEntry).get(OutStandingListVM::class.java) }
+    val graphEntry = remember { navController.currentBackStackEntry }
+    val viewModel = remember { ViewModelProvider(graphEntry!!)[OutStandingListVM::class.java] }
     val filterSheetState =
         remember { ModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden) }
     val filter by viewModel.filter.collectAsState()
@@ -253,7 +288,7 @@ private fun OutstandingScreenContent(
 
                         ) { id, name ->
                             navController.navigate(
-                                Screens.InvoiceList.navigationString(id, name)
+                                InvoiceListScreen(id,name)
                             )
                         }
                     }
@@ -446,9 +481,9 @@ private fun onDialogConfirmation(
         R.id.confirmation_sign_out -> {
             createGoogleClient(context).signOut().addOnSuccessListener {
                 val options = NavOptions.Builder()
-                    .setPopUpTo(Screens.Outstanding.route, true)
+                    .setPopUpTo(OutstandingScreen, true)
                     .build()
-                navController.navigate(Screens.GooGleSignIn.route, options)
+                navController.navigate(GoogleSignInScreen, options)
             }
         }
 

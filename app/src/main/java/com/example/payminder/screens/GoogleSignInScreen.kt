@@ -49,9 +49,11 @@ fun GoogleSignInScreen(
             completedTask.getResult(ApiException::class.java)
             //Successfully logged In. Change the UI State
             signedIn.value = true
-
+            Log.d("SUNDAR","Logged in")
         } catch (e: ApiException) {
             //Parse the exception and provide the Snack bar if needed
+            e.printStackTrace()
+            Log.d("SUNDAR","Log in failed")
             signedIn.value = false
         }
     }
@@ -69,9 +71,9 @@ fun GoogleSignInScreen(
         LaunchedEffect(signedIn.value){
             if(signedIn.value) {
                 val options=NavOptions.Builder()
-                    .setPopUpTo(Screens.GooGleSignIn.route,true)
+                    .setPopUpTo(GoogleSignInScreen,true)
                     .build()
-                navController.navigate(Screens.Outstanding.route,options)
+                navController.navigate(OutstandingScreen,options)
             }
         }
     }

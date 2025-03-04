@@ -23,20 +23,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import com.example.payminder.R
 import com.example.payminder.database.entities.Customer
-import com.example.payminder.screens.Screens
 import com.example.payminder.ui.LoadingScreen
 import com.example.payminder.ui.theme.PayMinderTheme
 import java.util.*
 
 @Composable
-fun CustomerInfoScreen(customerId: Int, navController: NavController) {
+fun CustomerInfoScreen(
+    backStackEntry: NavBackStackEntry,
+    navController: NavController
+) {
 
     val config = LocalConfiguration.current
-    val graphEntry = remember { navController.getBackStackEntry(Screens.CustomerInfo.route) }
-    val viewModel = remember { ViewModelProvider(graphEntry).get(CustomerInfoVM::class.java) }
+    val viewModel = remember { ViewModelProvider(backStackEntry)[CustomerInfoVM::class.java] }
     val customer = viewModel.customer
 
     if (customer == null) {
@@ -46,11 +48,6 @@ fun CustomerInfoScreen(customerId: Int, navController: NavController) {
             CustomerInfoPortraitScreen(customer = customer, navController)
         else
             CustomerInfoLandscapeScreen(customer = customer, navController)
-    }
-
-    DisposableEffect(customerId) {
-        viewModel.loadCustomer(customerId)
-        onDispose { }
     }
 }
 
