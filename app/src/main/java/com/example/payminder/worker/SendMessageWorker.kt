@@ -1,5 +1,6 @@
 package com.example.payminder.worker
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,10 +8,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.work.*
 import com.example.payminder.MainActivity
 import com.example.payminder.PayMinderApp
@@ -106,9 +109,14 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
 
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
-        return ForegroundInfo(
-            NOTIFICATION_ID_PROGRESS, notificationBuilder.build()
-        )
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            ForegroundInfo(
+                NOTIFICATION_ID_PROGRESS,
+                notificationBuilder.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        else
+            ForegroundInfo(NOTIFICATION_ID_PROGRESS, notificationBuilder.build())
     }
 
     private suspend fun sendTextMessages(customers: List<Customer>): Result {
@@ -210,6 +218,7 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
     }
 
 
+    @SuppressLint("MissingPermission")
     private fun notify(notification: Notification, id: Int = NOTIFICATION_ID_PROGRESS) {
         NotificationManagerCompat.from(applicationContext).apply {
             notify(id, notification)
@@ -277,7 +286,12 @@ class SendMessageWorker(context: Context, parameters: WorkerParameters) :
             }
         }
 
-        context.registerReceiver(receiver, IntentFilter(MessagingIntent.SMS_SENT_ACTION))
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            IntentFilter(MessagingIntent.SMS_SENT_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         awaitClose {
             context.unregisterReceiver(receiver)
         }

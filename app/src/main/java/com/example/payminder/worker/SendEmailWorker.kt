@@ -1,5 +1,6 @@
 package com.example.payminder.worker
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,11 +10,17 @@ import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.app.NotificationManagerCompat
-import androidx.work.*
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.example.payminder.MainActivity
 import com.example.payminder.PayMinderApp
 import com.example.payminder.R
@@ -29,6 +36,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.ExponentialBackOff
 import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.GmailScopes
+import kotlinx.coroutines.delay
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class SendEmailWorker(context: Context, parameters: WorkerParameters) :
@@ -119,13 +127,17 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         return Result.success()
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override suspend fun getForegroundInfo(): ForegroundInfo {
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            ForegroundInfo(NOTIFICATION_ID_PROGRESS,notificationBuilder.build(),ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING)
+            ForegroundInfo(
+                NOTIFICATION_ID_PROGRESS,
+                notificationBuilder.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
         else
             ForegroundInfo(NOTIFICATION_ID_PROGRESS, notificationBuilder.build())
+
     }
 
 
@@ -187,7 +199,7 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
         notify(notification, NOTIFICATION_ID_FAILURE)
     }
 
-
+    @SuppressLint("MissingPermission")
     private fun notify(notification: Notification, id: Int = NOTIFICATION_ID_PROGRESS) {
         NotificationManagerCompat.from(applicationContext).apply {
             notify(id, notification)
@@ -238,7 +250,7 @@ class SendEmailWorker(context: Context, parameters: WorkerParameters) :
             repository.getAllCustomers().filter { it.hasEmailAddress() && !it.emailSent }
         } else {
             val customer = repository.getCustomer(customerId)
-            return if (!customer.hasEmailAddress()) {
+            if (!customer.hasEmailAddress()) {
                 emptyList()
             } else {
                 if (customer.emailSent)
